@@ -1,0 +1,18 @@
+services:
+  pankogpt:
+    container_name: pankogpt
+    build:
+      context: .
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://localhost:5002
+      - MONGO_ATLAS_PUBLIC_KEY=
+      - MONGO_ATLAS_PRIVATE_KEY=
+      - MONGO_ATLAS_CLUSTER_NAME=
+      - MONGO_ATLAS_PROJECT_ID=
+      - MONGO_ATLAS_DB_NAME=
+    volumes:
+      - './src:/usr/src/src'
+    ports:
+      - '5002:5002'
+      - '5003:5003'
