@@ -1,0 +1,33 @@
+services:
+  production:
+    container_name: pankogpt-prod
+    build:
+      context: .
+    image: panko-gpt:0.4.0
+    environment:
+      - MONGO_ATLAS_PUBLIC_KEY=
+      - MONGO_ATLAS_PRIVATE_KEY=
+      - MONGO_ATLAS_PROJECT_ID=
+      - MONGO_ATLAS_CLUSTER_NAME=
+      - MONGO_DB_NAME=
+    ports:
+      - '5002:5002'
+  development:
+    container_name: pankogpt-dev
+    build:
+      context: .
+    image: panko-gpt-dev
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://localhost:5002
+      - MONGO_ATLAS_PUBLIC_KEY=
+      - MONGO_ATLAS_PRIVATE_KEY=
+      - MONGO_ATLAS_PROJECT_ID=
+      - MONGO_ATLAS_CLUSTER_NAME=
+      - MONGO_ATLAS_DB_NAME=
+    volumes:
+      - './backend/src:/usr/src/backend/src'
+      - './frontend/src:/usr/src/frontend/src'
+    ports:
+      - '5002:5002'
+      - '5003:5003'

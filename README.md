@@ -5,7 +5,7 @@
 ### Streamline gpt bot creation for Discord, Telegram and other platforms.
 
 ### Overview
-Deploy bots for various messaging platforms, starting with Discord and Telegram and soon expanding to Outlook, whatsapp, facebook and others. It abstracts the complexities of API connections, allowing you to focus on creating and designing the bots through a simple interface built with React.
+Deploy bots for various messaging platforms, starting with Discord and Telegram and soon expanding to Outlook, whatsapp, facebook and others. It abstracts the complexities of API connections, allowing you to focus on creating and designing the bots through a simple interface.
 
 Create bots with different goals and unique behavior.
 
@@ -40,20 +40,30 @@ Create bots with different goals and unique behavior.
 - Clone the repository:
   `git clone https://github.com/catalinberta/panko-gpt.git`
 - Navigate to the project directory: `cd panko-gpt`
-- Build docker
+- Rename `docker-compose.example.yml` to `docker-compose.yml`
+- Fill environment variables in `docker-compose.yml` with the missing MongoDB Atlas data
+- For Dev: 
+  - docker compose build dev
+  - docker compose up dev
+- For Prod: 
+  - docker compose build prod
+  - docker compose up prod
 
 ### Running the Application
-Open the interface in your browser (default: http://localhost:5002) to begin creating bots.
+- Open the interface in your browser.
+- For dev environment, use http://localhost:5003 (this uses the local server & reload)
+- For prod environment, use http://localhost:5002
 
 ### Join discord
 [Click here to join](https://eq6w.short.gy/discord-invite-github)
 
 ### Other links
-[Docker](https://hub.docker.com/repository/docker/catalinbertadev/panko-gpt)
-[Unraid](https://unraid.net/community/apps?q=panko-gpt)
+- [Docker](https://hub.docker.com/repository/docker/catalinbertadev/panko-gpt)
+- [Unraid](https://unraid.net/community/apps?q=panko-gpt)
+- [Me](https://catalinberta.com)
 
 ### Contributing
-Contributions are welcome! Whether it's adding new features, improving documentation, or reporting bugs, please feel free to make a pull request or open an issue.
+Contributions are very welcome! Whether it's adding new features, improving documentation, or reporting bugs, please feel free to make a pull request or open an issue.
 
 ### License
 This project is licensed under the MIT License.

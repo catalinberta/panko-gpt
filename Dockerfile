@@ -1,8 +1,5 @@
 FROM node:21
 
-ARG API_URL=http://localhost:5002
-ENV API_URL=$API_URL
-
 WORKDIR /usr/src
 RUN apt-get update \
 	&& apt-get install -yq libgconf-2-4 \
@@ -23,10 +20,9 @@ COPY frontend/tailwind.config.js frontend/tailwind.config.js
 COPY frontend/postcss.config.js frontend/postcss.config.js
 COPY frontend/index.html frontend/index.html
 
-COPY run-dev.sh ./run-dev.sh
-
 RUN sh -c 'cd backend && npm install'
 RUN sh -c 'cd frontend && npm install --include=dev'
 
-RUN chmod +x run-dev.sh
-CMD ./run-dev.sh
+COPY run-script.sh ./run-script.sh
+RUN chmod +x run-script.sh
+CMD ./run-script.sh

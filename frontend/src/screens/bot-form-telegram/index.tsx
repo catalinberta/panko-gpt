@@ -5,7 +5,7 @@ import ApiPaths from '../../constants/ApiPaths'
 import { TelegramConfig, Settings } from '../../services/api/types'
 import apiClient from '../../services/api'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChangeEvent, ReactElement, useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, ReactElement, useEffect, useMemo, useState, MouseEvent } from 'react'
 import RoutePaths from '../../constants/RoutePaths'
 import {
 	Cog6ToothIcon,
@@ -503,7 +503,7 @@ const TelegramBotForm: React.FC = () => {
 									<div className="mt-3 flex flex-1 flex-col text-center sm:ml-4 sm:mt-0 sm:text-left h-fit overflow-hidden">
 										<h3 className="text-base font-semibold leading-6 text-white" id="modal-title">Your structured data</h3>
 										<div className="mt-2">
-											<p className="text-sm text-white">Your knowedgebase gets structured into smaller standalone chunks and these are stored as vector embeddings. In this way, we can populate the bot's context with smaller and related content.</p>
+											<p className="text-sm text-white">Your knowedgebase gets structured into smaller standalone chunks and these are stored as vector embeddings. In this way, we can populate the bot's context with smaller and related content. You can view them below.</p>
 										</div>
 										{contextChunksLoading ? (
 											<div
