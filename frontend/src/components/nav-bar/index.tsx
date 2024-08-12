@@ -73,7 +73,7 @@ const NavBar = () => {
 								</div>
 								<div className="top-1 relative scale-90">
 									<div className="w-20 pointer-events-none select-none h-6 py-0.5 self-center  text-center text-white text-xs font-bold  bg-red-500 border-2 rounded-full border-red-900">
-										Open Beta
+										Beta
 									</div>
 									<p className="text-xs text-center scale-90 mt-0.5">{`v${packageJson.version}`}</p>
 								</div>

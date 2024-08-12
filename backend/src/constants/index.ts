@@ -5,3 +5,7 @@ export const atlasDefaults = {
 	clusterName: 'pankogpt',
 	indexName: 'pankogpt'
 }
+
+export const chatGptDefaults = {
+	model: 'gpt-4o'
+}

@@ -9,6 +9,8 @@ import { getWebPageContentTool, getCurrentTimeTool } from './functions-specs'
 import { extractArrayFromGptChunks, splitContentIntoChunks } from '../../utils'
 import { DiscordBotConfig } from '../../integrations/discord/types'
 import { TelegramBotConfig } from '../../integrations/telegram/types'
+import { getSettings } from '../../db/Settings'
+import { chatGptDefaults } from '../../constants'
 
 const openai = (apiKey: string) => {
 	return new OpenAI({
@@ -21,9 +23,12 @@ interface QueryResponse {
 	response?: ChatCompletion
 }
 
-export const getGptParamsObject = (
+export const getGptParamsObject = async (
 	config: DiscordBotConfig | TelegramBotConfig
-): ChatCompletionCreateParams => {
+): Promise<ChatCompletionCreateParams> => {
+	const settings = await getSettings();
+	const chatgptModel = settings?.chatGptModel || chatGptDefaults.model;
+	
 	const tools = [];
 	if(config.functionInternet) {
 		tools.push(getWebPageContentTool)
@@ -32,7 +37,7 @@ export const getGptParamsObject = (
 		tools.push(getCurrentTimeTool)
 	}
 	const params: ChatCompletionCreateParams = {
-		model: 'gpt-4o',
+		model: chatgptModel,
 		temperature: 0,
 		messages: [
 			{

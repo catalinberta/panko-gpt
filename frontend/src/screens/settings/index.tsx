@@ -12,9 +12,11 @@ import {
 	AtlasSearchIndexDefinition,
 	Settings as SettingsType
 } from '../../services/api/types'
+import Dropdown from '@components/dropdown'
 
 const schema = z.object({
 	openAiKey: z.string().optional(),
+	chatGptModel: z.string(),
 	atlasPublicKey: z.string(),
 	atlasPrivateKey: z.string(),
 	atlasProjectId: z.string(),
@@ -29,11 +31,13 @@ const defaultValues = {
 	atlasProjectId: '',
 	atlasCluster: '',
 	atlasDatabase: '',
-	openAiKey: ''
+	openAiKey: '',
+	chatGptModel: ''
 }
 
 const Settings: React.FC = () => {
 	const [settings, setSettings] = useState<SettingsType>({})
+	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
 	const [pankoIndex, setPankoIndex] = useState<
 		AtlasSearchIndexDefinition | false | null
 	>(null)
@@ -41,6 +45,8 @@ const Settings: React.FC = () => {
 	const {
 		register,
 		reset,
+		control,
+		watch,
 		formState: { errors, isSubmitting },
 		handleSubmit
 	} = useForm<FormFields>({
@@ -49,6 +55,7 @@ const Settings: React.FC = () => {
 	})
 	const params = useParams()
 	const settingsCategoryParam = params.category || 'gpt'
+	const openAiKey = watch('openAiKey')
 	const formSteps = useMemo(
 		() => [
 			{
@@ -106,6 +113,10 @@ const Settings: React.FC = () => {
 	}, [reset])
 
 	useEffect(() => {
+		getAllChatgptModels();
+	}, [openAiKey])
+
+	useEffect(() => {
 		getSettings()
 	}, [getSettings])
 
@@ -121,14 +132,26 @@ const Settings: React.FC = () => {
 		getIndex()
 	}, [settingsCategoryParam, getIndex, settings])
 
+	const getAllChatgptModels = () => {
+		apiClient
+			.get<string[]>(`${ApiPaths.ChatgptModels}`)
+			.then((response) => {
+				setChatgptModels(response.data);
+			})
+			.catch(error => {
+				console.error('Error fetching chatgpt models', error)
+			})
+	}
+
 	const onSubmit: SubmitHandler<FormFields> = async data => {
 		await apiClient.post<SettingsType>(ApiPaths.Settings, data)
-		getSettings()
+		await getSettings()
+		getAllChatgptModels();
 		if (!data.atlasPrivateKey || !data.atlasPublicKey || !data.atlasProjectId) {
 			return
 		}
 	}
-
+	
 	return (
 		<div className="flex flex-row flex-wrap py-4">
 			<SideMenu steps={formSteps} />
@@ -138,32 +161,35 @@ const Settings: React.FC = () => {
 						<div className="border-b border-gray-900/10 pb-12">
 							<div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 								{settingsCategoryParam === 'gpt' && (
-									<div className="col-span-full">
-										<h1 className="text-2xl text-yellow-500" id="home">
-											ChatGPT
-										</h1>
-										<div className="mt-5 col-span-full">
-											<label
-												htmlFor="street-address"
-												className="block text-sm font-medium leading-6 text-gray-300"
-											>
-												Global OpenAI Key
-											</label>
-											<div className="mt-2">
-												<input
-													type="text"
-													placeholder="sk-bbjC55Gs..."
-													className={`block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2  focus:ring-yellow-300 focus:ring-inset sm:text-sm sm:leading-6`}
-													{...register('openAiKey')}
-												/>
-											</div>
-											{errors.openAiKey && (
-												<div className="mt-1 text-red-500 text-xs">
-													{errors.openAiKey.message}
+									<>
+										<div className="col-span-full">
+											<h1 className="text-2xl text-yellow-500" id="home">
+												ChatGPT
+											</h1>
+											<div className="mt-5 col-span-full">
+												<label
+													htmlFor="street-address"
+													className="block text-sm font-medium leading-6 text-gray-300"
+												>
+													Global OpenAI Key
+												</label>
+												<div className="mt-2">
+													<input
+														type="text"
+														placeholder="sk-bbjC55Gs..."
+														className={`block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2  focus:ring-yellow-300 focus:ring-inset sm:text-sm sm:leading-6`}
+														{...register('openAiKey')}
+													/>
 												</div>
-											)}
+												{errors.openAiKey && (
+													<div className="mt-1 text-red-500 text-xs">
+														{errors.openAiKey.message}
+													</div>
+												)}
+											</div>
 										</div>
-									</div>
+										<Dropdown name="chatGptModel" label='Global ChatGPT Model' control={control} register={register} options={chatgptModels.map(model => ({label: model, value: model}))} hint="Add the Global OpenAI Key above to automatically fetch all ChatGPT models" />
+									</>
 								)}
 								{settingsCategoryParam === 'vector-search' && (
 									<div className="col-span-full">
