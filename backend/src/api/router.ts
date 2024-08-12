@@ -6,6 +6,7 @@ import telegramConfigs from './telegram-config'
 import vectorData from './vector-data'
 import settings from './settings'
 import atlas from './atlas'
+import openai from './openai'
 
 export default (): express.Router => {
 	settings(router)
@@ -13,5 +14,6 @@ export default (): express.Router => {
 	vectorData(router)
 	discordConfigs(router)
 	telegramConfigs(router)
+	openai(router)
 	return router
 }

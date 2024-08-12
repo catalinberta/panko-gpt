@@ -33,7 +33,7 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 		const discordMessage = await getDiscordMessage(client, message)
 		const typingInterval = await sendDiscordTypingInterval(message)
 		
-		const params: ChatCompletionCreateParams = getGptParamsObject(
+		const params: ChatCompletionCreateParams = await getGptParamsObject(
 			config
 		)
 		if (config.context) {

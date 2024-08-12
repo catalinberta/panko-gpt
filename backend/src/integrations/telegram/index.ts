@@ -38,7 +38,7 @@ const createOnMessageHandler = (
 		const userMessage: string = ctx.message.text
 		ctx.sendChatAction('typing')
 
-		const params: ChatCompletionCreateParams = getGptParamsObject(
+		const params: ChatCompletionCreateParams = await getGptParamsObject(
 			config
 		)
 		if (config.knowledgebase) {

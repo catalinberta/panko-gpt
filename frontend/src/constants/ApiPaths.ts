@@ -9,5 +9,6 @@ enum ApiPaths {
 	SearchVectorData = '/api/vector-data-search',
 	VectorDataIndex = '/api/vector-data-index',
 	Chunks = '/api/chunks',
+	ChatgptModels = '/api/chatgpt-models'
 }
 export default ApiPaths
