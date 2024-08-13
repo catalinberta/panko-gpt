@@ -10,6 +10,7 @@ services:
       - MONGO_ATLAS_PROJECT_ID=
       - MONGO_ATLAS_CLUSTER_NAME=
       - MONGO_DB_NAME=
+      - GLOBAL_OPEN_AI_KEY=
     ports:
       - '5002:5002'
   development:
@@ -25,6 +26,7 @@ services:
       - MONGO_ATLAS_PROJECT_ID=
       - MONGO_ATLAS_CLUSTER_NAME=
       - MONGO_ATLAS_DB_NAME=
+      - GLOBAL_OPEN_AI_KEY=
     volumes:
       - './backend/src:/usr/src/backend/src'
       - './frontend/src:/usr/src/frontend/src'

@@ -5,7 +5,7 @@
 ### Streamline gpt bot creation for Discord, Telegram and other platforms.
 
 ### 🚀 Overview
-Deploy and manage bots across various messaging platforms, starting with Discord and Telegram, with planned support for Outlook, WhatsApp, Facebook, and others. With **GPT Bot Manager**, you can:
+Deploy and manage bots for your friends and family across various messaging platforms, starting with Discord and Telegram, with planned support for Outlook, WhatsApp, Facebook, and others. With **GPT Bot Manager**, you can:
 
 - **Easily Create Custom Bots**: Deploy bots with specific goals and behaviors tailored to your needs.
 - **Customizable Settings**: Configure bot behavior by filling out straightforward forms—no coding required.
@@ -61,7 +61,7 @@ To install and run the application locally, follow these steps:
    mv docker-compose.example.yml docker-compose.yml
    ```
 
-4. Fill in the missing MongoDB Atlas environment variables in `docker-compose.yml`.
+4. Fill in the missing environment variables (e.g. Atlas credentials, OpenAI key etc.) in `docker-compose.yml`.
 
 ### ![For Development](https://img.shields.io/badge/For%20Development-FF5733?logo=visual-studio-code&logoColor=white) For Development
 
