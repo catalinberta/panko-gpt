@@ -67,24 +67,24 @@ To install and run the application locally, follow these steps:
 
 1. Build the development environment:
    ```bash
-   docker compose build dev
+   docker compose build development
    ```
 
 2. Start the development environment:
    ```bash
-   docker compose up dev
+   docker compose up development
    ```
 
 ### ![For Production](https://img.shields.io/badge/For%20Production-28A745?logo=heroku&logoColor=white) For Production
 
 1. Build the production environment:
    ```bash
-   docker compose build prod
+   docker compose build production
    ```
 
 2. Start the production environment:
    ```bash
-   docker compose up prod
+   docker compose up production
    ```
 
 ### ![Running the Application](https://img.shields.io/badge/Running%20the%20Application-3498DB?logo=server&logoColor=white) Running the Application
