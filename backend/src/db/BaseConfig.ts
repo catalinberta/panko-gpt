@@ -9,7 +9,6 @@ import { sleep } from '../utils'
 
 export const BaseConfigSchema = new mongoose.Schema({
 	_id: { type: Schema.Types.Mixed, default: uuidv4 },
-	botName: { type: String, required: true },
 	openAiKey: { type: String, required: true },
 	context: { type: String, required: true },
 	internalName: { type: String, required: false },

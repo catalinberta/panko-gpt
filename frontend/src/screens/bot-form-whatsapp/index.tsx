@@ -2,10 +2,10 @@ import { Control, FieldValues, SubmitHandler, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ApiPaths from '../../constants/ApiPaths'
-import { TelegramConfig, Settings } from '../../services/api/types'
+import { WhatsappConfig, Settings } from '../../services/api/types'
 import apiClient from '../../services/api'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChangeEvent, ReactElement, useEffect, useMemo, useState, MouseEvent } from 'react'
+import { ChangeEvent, ReactElement, useEffect, useMemo, useState, MouseEvent, useCallback, useRef } from 'react'
 import RoutePaths from '../../constants/RoutePaths'
 import {
 	Cog6ToothIcon,
@@ -15,13 +15,13 @@ import {
 import SideMenu from '../../components/side-menu'
 import WebpageContent from '@components/_functions/webpagecontent'
 import CurrentTime from '@components/_functions/currenttime'
+import QRCode from 'qrcode.react';
 
 const schema = z.object({
 	enabled: z.boolean(),
-	botName: z.string().min(1),
 	internalName: z.string(),
 	openAiKey: z.string().min(1),
-	botKey: z.string().min(1),
+	linked: z.boolean().default(false),
 	context: z.string().min(1),
 	knowledgebase: z.string(),
 	functionInternet: z.boolean(),
@@ -35,7 +35,7 @@ const defaultValues = {
 	botName: '',
 	internalName: '',
 	openAiKey: '',
-	botKey: '',
+	botKey: false,
 	context: '',
 	knowledgebase: '',
 	functionInternet: true,
@@ -51,12 +51,15 @@ export interface FormStep {
 	soon?: boolean
 }
 
-const TelegramBotForm: React.FC = () => {
+const WhatsappBotForm: React.FC = () => {
 	const [formStep, setFormStep] = useState<FormStep | null>(null)
 	const [settings, setSettings] = useState<Settings | null>(null)
 	const [contextChunks, setContextChunks] = useState<string[]>([]);
 	const [contextChunksLoading, setContextChunksLoading] = useState(false);
 	const [showChunksModal, setShowChunksModal] = useState(false);
+	const [showLinkModal, setShowLinkModal] = useState(false);
+	const [botId, setBotId] = useState('new');
+	const [botConfig, setBotConfig] = useState<WhatsappConfig | null>(null);
 	const navigate = useNavigate()
 	const {
 		register,
@@ -74,7 +77,7 @@ const TelegramBotForm: React.FC = () => {
 	const { openAiKey } = watch()
 
 	const params = useParams()
-	const editBotId = params.id || 'new'
+
 	const formStepParam = params['form-step']
 
 	const formSteps = useMemo(
@@ -83,17 +86,17 @@ const TelegramBotForm: React.FC = () => {
 				value: 'general',
 				label: 'General',
 				icon: <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/telegram-bot-form/${editBotId}/general`,
+				url: `/whatsapp-bot-form/${botId}/general`,
 				isActive: formStepParam === 'general'
 			},
 			{
 				value: 'vector-search',
 				label: 'Vector search',
 				icon: <CogIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/telegram-bot-form/${editBotId}/vector-search`,
+				url: `/whatsapp-bot-form/${botId}/vector-search`,
 				isActive: formStepParam === 'vector-search',
 				disabled:
-					editBotId === 'new'
+				botId === 'new'
 						? 'First create the bot to enable this section'
 						: false,
 				tooltip: (
@@ -102,7 +105,7 @@ const TelegramBotForm: React.FC = () => {
 						role="tooltip"
 						className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-700 rounded-lg shadow-sm opacity-0 tooltip "
 					>
-						Tooltip content
+						First create the bot to enable this section
 						<div className="tooltip-arrow" data-popper-arrow></div>
 					</div>
 				)
@@ -111,17 +114,17 @@ const TelegramBotForm: React.FC = () => {
 				value: 'functions',
 				label: 'Functions',
 				icon: <RectangleStackIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/telegram-bot-form/${editBotId}/functions`
+				url: `/whatsapp-bot-form/${botId}/functions`
 			},
 			{
 				value: 'skills',
 				label: 'Skills',
 				icon: <RectangleStackIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/telegram-bot-form/${editBotId}/skills`,
+				url: `/whatsapp-bot-form/${botId}/skills`,
 				soon: true
 			}
 		],
-		[formStepParam, editBotId]
+		[formStepParam, botId]
 	)
 
 	useEffect(() => {
@@ -131,30 +134,50 @@ const TelegramBotForm: React.FC = () => {
 		setFormStep(formStep ? formStep : formSteps[0])
 	}, [formStepParam, formSteps])
 
-	useEffect(() => {
-		if (editBotId !== 'new') {
+	
+	const getConfig = useCallback(() => {
+		console.log(botId);
+		if (botId !== 'new') {
 			apiClient
-				.get<TelegramConfig>(`${ApiPaths.TelegramConfigs}/${editBotId}`)
-				.then(response => {
-					reset(response.data)
-				})
-				.catch(error => {
-					console.error('Error:', error)
-				})
+			.get<WhatsappConfig>(`${ApiPaths.WhatsappConfigs}/${botId}`)
+			.then(response => {
+				reset(response.data)
+				setBotConfig(response.data);
+			})
+			.catch(error => {
+				console.error('Error:', error)
+			})
 		} else {
 			reset(defaultValues)
 		}
-	}, [editBotId, reset])
+	}, [botId, reset])
 
 	useEffect(() => {
+		getConfig()
+	}, [botId, getConfig])
+
+	useEffect(() => {
+		setBotId(params.id || 'new');
 		apiClient.get<Settings>(ApiPaths.Settings).then(response => {
 			setSettings(response.data)
 		})
 	}, [])
 
+	const onLinkReset = async () => {
+		setShowLinkModal(true);
+		const response = await apiClient.patch<WhatsappConfig>(
+			`${ApiPaths.WhatsappConfigs}/${botId}`,
+			{
+				...botConfig,
+				linked: false
+			}
+		)
+		console.log('new response', response);
+	}
+
 	const getChunks = () => {
 		setContextChunksLoading(true);
-		apiClient.get<{[key: string]: string}[]>(`${ApiPaths.Chunks}?botId=${editBotId}`).then(response => {
+		apiClient.get<{[key: string]: string}[]>(`${ApiPaths.Chunks}?botId=${botId}`).then(response => {
 			const parsedChunks = response.data.map(chunk => chunk.content)
 			setContextChunks(parsedChunks)
 			setContextChunksLoading(false);
@@ -169,7 +192,11 @@ const TelegramBotForm: React.FC = () => {
 
 	const onToggleChunksModal = () => {
 		setShowChunksModal(!showChunksModal);
-		console.log(showChunksModal)
+	}
+
+	const closeLinkModal = () => {
+		getConfig();
+		setShowLinkModal(false);
 	}
 
 	const onGlobalOpenAiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -181,19 +208,19 @@ const TelegramBotForm: React.FC = () => {
 	}
 
 	const deleteBot = async (id: string) => {
-		await apiClient.delete<TelegramConfig>(`${ApiPaths.TelegramConfigs}/${id}`)
-		navigate(`${RoutePaths.Integrations}/telegram`)
+		await apiClient.delete<WhatsappConfig>(`${ApiPaths.WhatsappConfigs}/${id}`)
+		navigate(`${RoutePaths.Integrations}/whatsapp`)
 	}
 	const onUpdate: SubmitHandler<FormFields> = async data => {
-		await apiClient.patch<TelegramConfig>(
-			`${ApiPaths.TelegramConfigs}/${editBotId}`,
+		await apiClient.patch<WhatsappConfig>(
+			`${ApiPaths.WhatsappConfigs}/${botId}`,
 			data
 		)
-		navigate(`${RoutePaths.Integrations}/telegram`)
+		navigate(`${RoutePaths.Integrations}/whatsapp`)
 	}
 	const onCreate: SubmitHandler<FormFields> = async data => {
-		await apiClient.post<TelegramConfig>(ApiPaths.TelegramConfigs, data)
-		navigate(`${RoutePaths.Integrations}/telegram`)
+		const response = await apiClient.post<WhatsappConfig>(ApiPaths.WhatsappConfigs, data)
+		navigate(`${RoutePaths.WhatsappBotForm}/${response.data._id}`)
 	}
 	return (
 		<div className="flex flex-1 flex-row flex-wrap py-4">
@@ -224,33 +251,11 @@ const TelegramBotForm: React.FC = () => {
 									Enabled
 								</span>
 							</label>
+								<p className="mt-1 text-sm leading-6 text-gray-400">
+									Toggle bot's connection on and off
+								</p>
 							<div className="border-b border-gray-900/10 pb-12">
 								<div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-									<div className="col-span-full">
-										<label
-											htmlFor="street-address"
-											className="block text-sm font-medium leading-6 text-gray-300"
-										>
-											Public name
-										</label>
-										<div className="mt-2">
-											<input
-												type="text"
-												autoComplete="botName"
-												placeholder="PankoGPT"
-												className={`block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2  focus:ring-yellow-300 focus:ring-inset sm:text-sm sm:leading-6`}
-												{...register('botName')}
-											/>
-										</div>
-										{errors.botName && (
-											<div className="mt-1 text-red-500 text-xs">
-												{errors.botName.message}
-											</div>
-										)}
-										<p className="mt-1 text-sm leading-6 text-gray-400">
-											Name that will appear in Telegram.
-										</p>
-									</div>
 									<div className="col-span-full">
 										<label
 											htmlFor="street-address"
@@ -269,8 +274,7 @@ const TelegramBotForm: React.FC = () => {
 											/>
 										</div>
 										<p className="mt-1 text-sm leading-6 text-gray-400">
-											Name to differentiate between bots that might have the
-											same public name.
+											A unique name to differentiate between bots when viewing all of them in the dashboard.
 										</p>
 									</div>
 									<div className="col-span-full">
@@ -313,29 +317,6 @@ const TelegramBotForm: React.FC = () => {
 											</div>
 										)}
 									</div>
-									<div className="col-span-full">
-										<label
-											htmlFor="street-address"
-											className="block text-sm font-medium leading-6 text-gray-300"
-										>
-											Telegram Bot Key
-										</label>
-										<div className="mt-2">
-											<input
-												type="text"
-												id="bot-key"
-												autoComplete="bot-key"
-												placeholder="MTIyMDQxMTE3Mz..."
-												className="block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-yellow-300 sm:text-sm sm:leading-6"
-												{...register('botKey')}
-											/>
-										</div>
-										{errors.botKey && (
-											<div className="mt-1 text-red-500 text-xs">
-												{errors.botKey.message}
-											</div>
-										)}
-									</div>
 								</div>
 								<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 									<div className="col-span-full">
@@ -363,6 +344,52 @@ const TelegramBotForm: React.FC = () => {
 										</p>
 									</div>
 								</div>
+								{botId !== 'new' && (
+									<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 ">
+										<div className="col-span-full">
+											<div className="flex items-center justify-between bg-gray-800 p-3 mt-2">
+												{botConfig?.linked ? (
+													<>
+														<p className="text-md text-green-400 font-medium">Linked to a device</p>
+														<div>
+														<button
+															type="button"
+															className="rounded-md bg-red-300 disabled:bg-gray-200 px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 "
+															onClick={onLinkReset}
+														>
+															Unlink
+														</button>
+														<button
+															type="button"
+															className="rounded-md bg-green-300 disabled:bg-gray-200 ml-4 px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 "
+															onClick={onLinkReset}
+														>
+															Refresh
+														</button>
+														</div>
+													</>
+												) : (
+													<>
+														<p className="text-md text-red-400 font-medium">Not linked to a device</p>
+														<button
+															type="button"
+															className="rounded-md bg-green-300 disabled:bg-gray-200 px-10 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 "
+															onClick={() =>
+																setShowLinkModal(true)
+															}
+														>
+															Link now
+														</button>
+													</>
+												)}
+												
+											</div>
+											<p className="mt-3 text-sm leading-6 text-gray-400">
+												Whether the bot has been linked to a WhatsApp account
+											</p>
+										</div>
+									</div>
+								)}
 							</div>
 						</div>
 					)}
@@ -423,12 +450,12 @@ const TelegramBotForm: React.FC = () => {
 							</div>
 						)}
 					<div className="mt-6 flex items-center justify-end gap-x-6">
-						{editBotId !== 'new' && (
+						{botId !== 'new' && (
 							<>
 								<button
 									type="button"
 									className=" border  focus:ring-4 focus:outline-none font-medium rounded-md text-sm px-5 py-2 text-center border-red-500 text-red-500 hover:text-white hover:bg-red-600 focus:ring-red-900"
-									onClick={deleteBot.bind(null, editBotId)}
+									onClick={deleteBot.bind(null, botId)}
 								>
 									Delete
 								</button>
@@ -461,7 +488,7 @@ const TelegramBotForm: React.FC = () => {
 							</>
 						)}
 						<div className="mt-6 flex items-center justify-end gap-x-6">
-							{editBotId === 'new' && (
+							{botId === 'new' && (
 								<button
 									onClick={handleSubmit(onCreate)}
 									disabled={isSubmitting}
@@ -537,8 +564,75 @@ const TelegramBotForm: React.FC = () => {
 					</div>
 				</div>
 			</div>
+			<LinkModal show={showLinkModal} botId={botId} close={closeLinkModal} config={botConfig} getConfig={getConfig} />
 		</div>
 	)
 }
 
-export default TelegramBotForm
+interface ILinkModal {
+	show: boolean;
+	botId: string;
+	close: () => void;
+	getConfig: () => void;
+	config: WhatsappConfig | null;
+}
+const LinkModal = (props: ILinkModal) => {
+	const pollingIntervalRef = useRef(0);
+
+	useEffect(() => {
+		if(props.show) {
+			pollingIntervalRef.current = setInterval(() => {
+				props.getConfig();
+			}, 2000)
+		} else {
+			clearTimeout(pollingIntervalRef.current)
+		}
+
+		return () => {
+			clearTimeout(pollingIntervalRef.current)
+		}
+	}, [props.show])
+
+	const isLinked = props.config?.linked && !props.config?.qrcode;
+	const qrcode = props.config && props.config.qrcode;
+
+	return (
+		<div className={`${props.show ? '' : 'hidden'} relative z-10`} aria-labelledby="modal-title" role="dialog" aria-modal="true">
+			<div className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity" aria-hidden="true"></div>
+			<div className="fixed  lg:px-40 sm:px-10 inset-0 z-10 w-screen overflow-y-auto">
+				<div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+					<div className="relative bg-gray-700 transform overflow-hidden rounded-lg  text-left shadow-xl transition-all sm:my-8 w-full">
+						<div className=" px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+							<div className="sm:flex sm:items-start">
+								<div className="mt-3 flex flex-1 flex-col text-center sm:ml-4 sm:mt-0 sm:text-left h-fit overflow-hidden">
+									<h3 className="text-base font-semibold leading-6 text-white" id="modal-title">Wait for the QR Code to appear and scan it from: <b>Whatsapp App {"->"} Linked Devices</b></h3>
+									{!isLinked && !qrcode && (
+										<div
+											className="inline-block self-center m-10 h-20 w-20 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+											role="status">
+											<span
+												className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+												></span>
+										</div>
+									)}
+									{isLinked && (
+										<p className="m-10 text-xl font-semibold leading-4 text-center text-green-400">Successfully linked!</p>
+									)}
+									{qrcode && (
+										<div className="flex my-4 justify-center bg-gray-800 rounded gap-x-6 p-2">
+											{<QRCode level='L' includeMargin value={String(qrcode)} size={400} />}
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+						<div className="bg-gray-800 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+							<button onClick={() => {props.close()}} type="button" className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Close</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>)
+}
+
+export default WhatsappBotForm

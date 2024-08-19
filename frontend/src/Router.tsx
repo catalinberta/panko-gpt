@@ -11,6 +11,7 @@ import Breadcrumbs from './components'
 import Footer from '@components/footer'
 import NavBar from '@components/nav-bar'
 import Settings from '@screens/settings'
+import WhatsappBotForm from '@screens/bot-form-whatsapp'
 
 const RootLayout = () => {
 	return (
@@ -40,6 +41,11 @@ export const Router = createBrowserRouter(
 				index
 				path="/telegram-bot-form/:id?/:form-step?"
 				element={<TelegramBotForm />}
+			/>
+			<Route
+				index
+				path="/whatsapp-bot-form/:id?/:form-step?"
+				element={<WhatsappBotForm />}
 			/>
 		</Route>
 	)

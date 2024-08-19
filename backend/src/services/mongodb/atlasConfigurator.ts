@@ -2,6 +2,7 @@ import 'dotenv/config'
 import atlasClient, { AtlasClient } from 'mongodb-atlas-api-client'
 import { atlasDefaults } from '../../constants'
 import { createAtlasSearchIndex, getAtlasSearchIndex } from '.'
+import { updateSettings } from '../../db/Settings'
 
 const atlasConfigurator = async (): Promise<string | undefined> => {
 	console.log('Init Atlas Configurator')
@@ -108,11 +109,14 @@ export const configureIndex = async () => {
 		index = await createAtlasSearchIndex()
 	}
 	if ('error' in index) {
+		updateSettings({hasVectorDataSearchIndex: false})
 		console.error('Could not create panko index:', index)
 		return
-	}
-	if (index) {
+	} else if(index) {
+		updateSettings({hasVectorDataSearchIndex: true});
 		console.log('Using index:', index.name)
+	} else {
+		updateSettings({hasVectorDataSearchIndex: false});
 	}
 	return index
 }

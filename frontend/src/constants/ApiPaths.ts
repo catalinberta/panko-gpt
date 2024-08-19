@@ -5,6 +5,7 @@ enum ApiPaths {
 	AtlasDatabases = '/api/atlas-databases',
 	DiscordConfigs = '/api/discord-configs',
 	TelegramConfigs = '/api/telegram-configs',
+	WhatsappConfigs = '/api/whatsapp-configs',
 	CreateVectorSearchIndex = '/api/create-vector-search-index',
 	SearchVectorData = '/api/vector-data-search',
 	VectorDataIndex = '/api/vector-data-index',

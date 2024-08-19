@@ -5,6 +5,7 @@ import { migrateCollectionsToUUIDv4 } from '../../../db/migrations'
 
 const DiscordConfigSchema = new mongoose.Schema({
 	...BaseConfigSchema.obj,
+	botName: { type: String, required: true },
 	botKey: { type: String, required: true },
 	clientId: { type: String, required: false },
 	botStatusText: { type: String, required: false }
