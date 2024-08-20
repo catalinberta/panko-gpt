@@ -18,8 +18,9 @@ const NavBar = () => {
 			path: RoutePaths.Home,
 			isActive:
 				location.pathname === RoutePaths.Home ||
+				location.pathname === `${RoutePaths.Integrations}/discord` ||
 				location.pathname === `${RoutePaths.Integrations}/telegram` ||
-				location.pathname === `${RoutePaths.Integrations}/discord`
+				location.pathname === `${RoutePaths.Integrations}/whatsapp`
 		},
 		{
 			name: 'Settings',
@@ -45,13 +46,13 @@ const NavBar = () => {
 								</Disclosure.Button>
 							</div>
 							<div className="flex flex-1 items-center justify-start sm:justify-end sm:items-stretch flex-row-reverse sm:flex-row">
-								<div className="flex flex-col self-center flex-shrink-0 items-center">
+								<a onClick={() => Router.navigate(RoutePaths.Home)} className="flex flex-col self-center flex-shrink-0 items-center cursor-pointer">
 									<img
 										className="h-9 w-auto rounded-full"
 										src={PankoLogo}
 										alt="Logo"
 									/>
-								</div>
+								</a>
 								<div className="flex items-center flex-1 ml-6 hidden sm:flex">
 									<div className="flex space-x-4">
 										{navigation.map(item => (

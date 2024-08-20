@@ -32,6 +32,14 @@ const SideMenu = (props: SideMenuProps) => {
 								)}
 							</button>
 							{step.tooltip ? step.tooltip : null}
+							<div
+						id="vector-search-tooltip"
+						role="tooltip"
+						className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-700 rounded-lg shadow-sm opacity-0 tooltip "
+					>
+						First create the bot to enable this section
+						<div className="tooltip-arrow" data-popper-arrow></div>
+					</div>
 						</li>
 					))}
 				</ul>

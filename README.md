@@ -2,10 +2,10 @@
 
 ## _*Currently in beta*_
 
-### Streamline gpt bot creation for Discord, Telegram and other platforms.
+### Create your own unique gpt bots on Whatsapp, Discord, Telegram and other platforms.
 
 ### 🚀 Overview
-Deploy and manage bots for your friends and family across various messaging platforms, starting with Discord and Telegram, with planned support for Outlook, WhatsApp, Facebook, and others. With **GPT Bot Manager**, you can:
+Deploy and manage bots for your friends, services and/or family across various messaging platforms, starting with Whatsapp, Discord and Telegram, with planned support for Outlook, Facebook, and others. With **GPT Bot Manager**, you can:
 
 - **Easily Create Custom Bots**: Deploy bots with specific goals and behaviors tailored to your needs.
 - **Customizable Settings**: Configure bot behavior by filling out straightforward forms—no coding required.
@@ -22,7 +22,7 @@ Deploy and manage bots for your friends and family across various messaging plat
 | ![Bot functions](https://catalinberta.com/files/panko/panko-gpt/screenshots/05-functions.png) | Overview of bot functions |
 
 ## ![Features](https://img.shields.io/badge/Features-8E44AD?logo=features&logoColor=white) Features
-- **User-Friendly Interface**: Deploy custom bots for Discord and Telegram (and soon other platforms) without the need for deep technical knowledge.
+- **User-Friendly Interface**: Deploy custom bots for Whatsapp, Discord and Telegram (and soon other platforms) without the need for deep technical knowledge.
 - **Customizable Behavior**: Fine-tune your bots' responses and actions using simple forms.
 - **Contextual Bots**: Create bots that understand and respond based on context, enhancing their utility.
 - **Configurable Tools**: Extend your bot’s capabilities with additional functions, such as internet access, time-based responses, etc.
@@ -38,7 +38,7 @@ Deploy and manage bots for your friends and family across various messaging plat
 Before you begin, ensure you have met the following requirements:
 
 - **Docker**
-- **Discord and/or Telegram account**
+- **Whatsapp, Discord and/or Telegram account**
 - **OpenAI account**
 - **MongoDB** (Cloud version with a free tier available [here](https://www.mongodb.com/cloud/atlas/register))
 

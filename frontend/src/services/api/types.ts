@@ -19,7 +19,6 @@ export interface DiscordConfig {
 	detectLanguages?: string[]
 	hasVectorSearchIndex?: boolean
 }
-
 export interface TelegramConfig {
 	_id: string
 	botName: string
@@ -29,6 +28,18 @@ export interface TelegramConfig {
 	internalName?: string
 	botStatusText?: string
 	detectLanguages?: string[]
+}
+export interface WhatsappConfig {
+	_id: string
+	botName: string
+	key: string
+	enabled: boolean
+	context: string
+	internalName?: string
+	botStatusText?: string
+	detectLanguages?: string[]
+	linked: boolean;
+	qrcode?: string;
 }
 
 export interface AtlasSearchIndexDefinition {

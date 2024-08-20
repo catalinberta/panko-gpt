@@ -77,8 +77,11 @@ const createAtlasIndexHandler = async (req: Request, res: Response) => {
 			indexBody
 		)
 		updateSettings({ hasVectorDataSearchIndex: true })
+		console.log('create atlas index - update settings true')
 		res.json(index)
 	} catch (e: any) {
+		console.log('error create atlas index - update settings true', e)
+		updateSettings({ hasVectorDataSearchIndex: false })
 		res.json({ error: e.message })
 	}
 }

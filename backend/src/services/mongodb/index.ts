@@ -99,9 +99,10 @@ export const createAtlasSearchIndex = async (): Promise<
 			settings?.atlasCluster!,
 			indexBody
 		)
-		updateSettings({ hasVectorDataSearchIndex: true })
+		console.log('create atlas index - update settings true')
 		return index
 	} catch (e: any) {
+		console.log('error create atlas index - update settings false', e)
 		return { error: e.message }
 	}
 }

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import apiClient from '../../services/api'
-import { DiscordConfig, TelegramConfig } from '../../services/api/types'
+import { DiscordConfig, TelegramConfig, WhatsappConfig } from '../../services/api/types'
 import ApiPaths from '../../constants/ApiPaths'
 import SideMenu from '../../components/side-menu'
 import {
@@ -39,8 +39,8 @@ const Integrations = () => {
 				value: 'whatsapp',
 				label: 'WhatsApp',
 				icon: <PhoneIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `${RoutePaths.Integrations}/telegram`,
-				soon: true
+				url: `${RoutePaths.Integrations}/whatsapp`,
+				isActive: integrationName === 'whatsapp'
 			},
 			{
 				value: 'messenger',
@@ -86,6 +86,16 @@ const Integrations = () => {
 		if (params.id === 'telegram') {
 			apiClient
 				.get<TelegramConfig[]>(ApiPaths.TelegramConfigs)
+				.then(response => {
+					setConfigs(response.data)
+				})
+				.catch(error => {
+					console.error('Error:', error)
+				})
+		}
+		if (params.id === 'whatsapp') {
+			apiClient
+				.get<WhatsappConfig[]>(ApiPaths.WhatsappConfigs)
 				.then(response => {
 					setConfigs(response.data)
 				})
@@ -142,11 +152,12 @@ const Integrations = () => {
 									<button
 										type="button"
 										onClick={() => {
-											if (!params.id || params.id === 'discord') {
+											if (!params.id || params.id === 'discord')
 												navigate(`/discord-bot-form/${config._id}`)
-											}
 											params.id === 'telegram' &&
 												navigate(`/telegram-bot-form/${config._id}`)
+											params.id === 'whatsapp' &&
+												navigate(`/whatsapp-bot-form/${config._id}`)
 										}}
 										className="text-gray-900 bg-gradient-to-r bg-yellow-300 hover:bg-yellow-200 focus:ring-4 focus:outline-none focus:ring-transparent shadow-lg rounded-md px-3 py-1 text-center"
 									>
@@ -171,11 +182,13 @@ const Integrations = () => {
 							navigate('/discord-bot-form')
 						}
 						params.id === 'telegram' && navigate('/telegram-bot-form')
+						params.id === 'whatsapp' && navigate('/whatsapp-bot-form')
 					}}
 					className="mt-10 text-gray-900 self-center bg-gradient-to-r bg-yellow-300 hover:bg-yellow-200 focus:ring-4 focus:outline-none focus:ring-transparent shadow-lg rounded-md px-3 py-1 text-center"
 				>
 					{(!params.id || params.id === 'discord') && 'New Discord Bot'}
 					{params.id === 'telegram' && 'New Telegram Bot'}
+					{params.id === 'whatsapp' && 'New Whatsapp Bot'}
 				</button>
 			</div>
 		</div>
