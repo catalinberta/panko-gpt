@@ -7,9 +7,8 @@ import {
 import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
 import { getKnowledebaseContext } from '../../utils'
-import { ChatId, Client, LocalAuth, RemoteAuth } from 'whatsapp-web.js';
+import { ChatId, Client, LocalAuth } from 'whatsapp-web.js';
 import { getPreviousMessages, setPreviousMessage } from '../../services/previous-messages'
-import { createUnparsedSourceFile } from 'typescript'
 
 const botInstances: { [key: string]: Client } = {}
 
@@ -18,7 +17,7 @@ const Whatsapp = async () => {
 	for(let config in configs) {
 		if (!configs[config].enabled) continue
 		await createWhatsappClient(configs[config])
-		await new Promise(resolve => setTimeout(resolve, 10000))
+		await new Promise(resolve => setTimeout(resolve, 20000))
 	}
 }
 
@@ -32,8 +31,8 @@ const createOnMessageHandler = (
 		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
 		const currentTimestamp = Math.round(Date.now() / 1000)
 		const messageTimestamp = msg.timestamp;
-		const maxAgeInSeconds = 0;
-		console.log('msg age', currentTimestamp - messageTimestamp)
+		const maxAgeInSeconds = 60;
+
 		if(currentTimestamp - messageTimestamp > maxAgeInSeconds) return;
 		if(isGroup && !isMentioned) return;
 
