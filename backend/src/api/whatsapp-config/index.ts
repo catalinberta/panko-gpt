@@ -92,7 +92,7 @@ const unlinkWhatsappConfigByIdHandler = async (req: Request, res: Response) => {
 const deleteWhatsappConfigByIdHandler = async (req: Request, res: Response) => {
 	try {
 		const whatsappConfig = await deleteWhatsappConfigById(req.params.id)
-		await stopWhatsappClient(req.params.id)
+		await unlinkWhatsappClient(req.params.id)
 		return res.json(whatsappConfig)
 	} catch (error) {
 		console.log(error)

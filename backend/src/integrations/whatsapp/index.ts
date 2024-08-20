@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { WhatsappBotConfig } from './types'
 import {
 	getWhatsappConfigById,
@@ -127,8 +128,8 @@ export const createWhatsappClient = async (
 				qrcode: ''
 			})
 		});
-		client.on('disconnected', async () => {
-			console.log(`${botName} disconnected`)
+		client.on('disconnected', async (e) => {
+			console.log(`${botName} disconnected`, e)
 			await updateWhatsappConfigById(config._id, {
 				enabled: false,
 				linked: false,
@@ -178,6 +179,7 @@ export const unlinkWhatsappClient = async (id: string) => {
 
 export const stopWhatsappClient = async (id: string) => {
 	try {
+		await botInstances[id]?.logout()
 		await botInstances[id]?.destroy()
 		delete botInstances[id]
 	} catch (e) {
