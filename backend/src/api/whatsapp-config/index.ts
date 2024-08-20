@@ -9,7 +9,8 @@ import {
 import {
 	createWhatsappClient,
 	restartWhatsappClient,
-	stopWhatsappClient
+	stopWhatsappClient,
+	unlinkWhatsappClient
 } from '../../integrations/whatsapp'
 
 export default (router: express.Router) => {
@@ -18,6 +19,7 @@ export default (router: express.Router) => {
 	router.post('/whatsapp-configs', createWhatsappConfigHandler)
 	router.patch('/whatsapp-configs/:id', updateWhatsappConfigHandler)
 	router.delete('/whatsapp-configs/:id', deleteWhatsappConfigByIdHandler)
+	router.delete('/whatsapp-links/:id', unlinkWhatsappConfigByIdHandler)
 }
 
 const getWhatsappConfigsHandler = async (req: Request, res: Response) => {
@@ -53,7 +55,6 @@ const createWhatsappConfigHandler = async (req: Request, res: Response) => {
 }
 
 const updateWhatsappConfigHandler = async (req: Request, res: Response) => {
-	console.log(0, 'patch whatsapp', req.body);
 	try {
 		const whatsappConfigs = await updateWhatsappConfigById(
 			req.params.id,
@@ -70,6 +71,23 @@ const updateWhatsappConfigHandler = async (req: Request, res: Response) => {
 		return res.sendStatus(400)
 	}
 }
+
+
+const unlinkWhatsappConfigByIdHandler = async (req: Request, res: Response) => {
+	try {
+		const config = await updateWhatsappConfigById(req.params.id, {
+			enabled: false,
+			linked: false,
+			qrcode: ''
+		})
+		await unlinkWhatsappClient(req.params.id)
+		return res.json(config)
+	} catch (error) {
+		console.log('Error unlinking Whatsapp client', error)
+		return res.sendStatus(400);
+	}
+}
+
 
 const deleteWhatsappConfigByIdHandler = async (req: Request, res: Response) => {
 	try {

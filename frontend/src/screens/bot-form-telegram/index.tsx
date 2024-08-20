@@ -169,7 +169,6 @@ const TelegramBotForm: React.FC = () => {
 
 	const onToggleChunksModal = () => {
 		setShowChunksModal(!showChunksModal);
-		console.log(showChunksModal)
 	}
 
 	const onGlobalOpenAiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {

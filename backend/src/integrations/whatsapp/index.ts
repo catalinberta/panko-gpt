@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { WhatsappBotConfig } from './types'
 import {
 	getWhatsappConfigById,
@@ -8,19 +7,19 @@ import {
 import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
 import { getKnowledebaseContext } from '../../utils'
-import { Client, LocalAuth } from 'whatsapp-web.js';
-import qrcode from 'qrcode-terminal';
+import { ChatId, Client, LocalAuth, RemoteAuth } from 'whatsapp-web.js';
+import { getPreviousMessages, setPreviousMessage } from '../../services/previous-messages'
+import { createUnparsedSourceFile } from 'typescript'
 
 const botInstances: { [key: string]: Client } = {}
 
 const Whatsapp = async () => {
 	const configs: WhatsappBotConfig[] = await getWhatsappConfigs()
-	configs.forEach(async config => {
-		console.log(0, configs);
-		if (!config.enabled) return
-		console.log(1)
-		const whatsappClient = await createWhatsappClient(config)
-	})
+	for(let config in configs) {
+		if (!configs[config].enabled) continue
+		await createWhatsappClient(configs[config])
+		await new Promise(resolve => setTimeout(resolve, 10000))
+	}
 }
 
 const createOnMessageHandler = (
@@ -28,12 +27,20 @@ const createOnMessageHandler = (
 	client: Client
 ) => {
 	client.on('message', async msg => {
-		console.log('Got message', msg.body);
-		if (msg.body == '!ping') {
-			msg.reply('pong');
-		}
+		const chat = await msg.getChat()
+		const isGroup = chat.isGroup;
+		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
+		const currentTimestamp = Math.round(Date.now() / 1000)
+		const messageTimestamp = msg.timestamp;
+		const maxAgeInSeconds = 0;
+		console.log('msg age', currentTimestamp - messageTimestamp)
+		if(currentTimestamp - messageTimestamp > maxAgeInSeconds) return;
+		if(isGroup && !isMentioned) return;
 
-		const userMessage: string = msg.body;
+		const author = await msg.getContact();
+		const authorName = author.pushname || author.name || author.shortName; 
+
+		const userMessage: string = `${authorName}: ${msg.body}`;
 
 		const params: ChatCompletionCreateParams = await getGptParamsObject(
 			config
@@ -41,11 +48,13 @@ const createOnMessageHandler = (
 		if (config.knowledgebase) {
 			await getKnowledebaseContext(userMessage, params, config)
 		}
-		// getPreviousMessages(params, ctx.message.chat.id.toString())
+
+		getPreviousMessages(params, msg.from)
 		params.messages.push({
 			role: 'user',
 			content: userMessage
 		})
+
 		let chatgptResponse
 		try {
 			chatgptResponse = await gptQuery(config.openAiKey, params)
@@ -58,16 +67,16 @@ const createOnMessageHandler = (
 			msg.reply(chatgptResponse.error)
 			return
 		}
-		const assistantMessage =
-			chatgptResponse?.response?.choices[0].message.content
+		const assistantMessage = chatgptResponse?.response?.choices[0].message.content;
+
 		if (!assistantMessage) return
 
-		// await setPreviousMessage(
-		// 	config,
-		// 	ctx.message.chat.id.toString(),
-		// 	userMessage,
-		// 	assistantMessage
-		// )
+		await setPreviousMessage(
+			config,
+			msg.from,
+			userMessage,
+			assistantMessage
+		)
 
 		try {
 			msg.reply(assistantMessage)
@@ -81,6 +90,7 @@ const createOnMessageHandler = (
 export const createWhatsappClient = async (
 	config: WhatsappBotConfig
 ): Promise<Client> => {
+	const botName = config.internalName;
 	const client = new Client({
 		takeoverOnConflict: true,
 		puppeteer: {
@@ -91,41 +101,37 @@ export const createWhatsappClient = async (
 			dataPath: './_sessions/whatsapp'
 		})
 	}) 
-
+	
 	try {
+		// Destroy and remove previous instance
+		if(botInstances[config._id]) botInstances[config._id].destroy();
+		botInstances[config._id] = client
+
+		// Init
 		client.initialize();
 		createOnMessageHandler(config, client)
-		console.log(`${config.internalName || config.botName} is Online!`)
-		botInstances[config._id] = client
+		console.log(`${botName} is Online!`)
 
 		client.on('qr', async (qr) => {
 			await updateWhatsappConfigById(config._id, {
 				linked: false,
 				qrcode: qr
 			})
-			qrcode.generate(qr, {small: true});
-			console.log('QR RECEIVED', qr);
 		});
 		client.on('ready', () => {
-			console.log('Whatsapp Client is ready!');
+			console.log(`Whatsapp Client ${botName} is ready!`);
 		});
 		client.on('authenticated', async () => {
-			console.log('authenticated')
+			console.log(`${botName} authenticated`)
 			await updateWhatsappConfigById(config._id, {
 				linked: true,
 				qrcode: ''
 			})
 		});
 		client.on('disconnected', async () => {
-			console.log('disconnected')
+			console.log(`${botName} disconnected`)
 			await updateWhatsappConfigById(config._id, {
-				linked: false,
-				qrcode: ''
-			})
-		});
-		client.on('auth_failure', async () => {
-			console.log('auth fail')
-			await updateWhatsappConfigById(config._id, {
+				enabled: false,
 				linked: false,
 				qrcode: ''
 			})
@@ -144,16 +150,14 @@ export const createWhatsappClient = async (
 }
 
 export const restartWhatsappClient = async (id: string) => {
-	console.log(0, 'Restart whatsapp');
 	try {
 		await botInstances[id]?.destroy()
 		const config = await getWhatsappConfigById(id)
+		console.log('Restarting', config.internalName);
 		if (config) {
 			await createWhatsappClient(config)
-			console.log(0, 'Restart whatsapp2');
 		}
 	} catch (e) {
-		console.log(0, 'Error Restart whatsapp9', e);
 		console.log(
 			'Error restarting Whatsapp Bot with id:',
 			id,
@@ -164,26 +168,19 @@ export const restartWhatsappClient = async (id: string) => {
 }
 
 export const unlinkWhatsappClient = async (id: string) => {
-	console.log(0, 'Unlink');
 	try {
 		await botInstances[id]?.logout()
 		await botInstances[id]?.destroy()
+		delete botInstances[id]
 	} catch (e) {
-		console.log(0, 'Error unlinking whatsapp', e);
-		console.log(
-			'Error restarting Whatsapp Bot with id:',
-			id,
-			'Error message:',
-			e
-		)
+		console.log('Error unlinking whatsapp', e);
 	}
 }
 
 export const stopWhatsappClient = async (id: string) => {
 	try {
-		console.log(0, 'stop & destroy whatsapp');
 		await botInstances[id]?.destroy()
-		console.log(0, 'destroy complete');
+		delete botInstances[id]
 	} catch (e) {
 		console.log('Error stopping Whatsapp Bot with id:', id, 'Error message:', e)
 	}

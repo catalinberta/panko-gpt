@@ -1,5 +1,6 @@
 {
 	"name": "interface",
+	"description": "PankoGPT Frontend - ChatGPT bot creation platform",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
@@ -37,7 +38,6 @@
 		"eslint": "^8.57.0",
 		"eslint-plugin-react-hooks": "^4.6.0",
 		"eslint-plugin-react-refresh": "^0.4.6",
-		"path": "^0.12.7",
 		"postcss": "^8.4.38",
 		"prettier": "^3.3.3",
 		"tailwindcss": "^3.4.3",

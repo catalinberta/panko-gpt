@@ -2,6 +2,7 @@ import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { estimateChatGPTTokens } from '../../utils'
 import openai from '../chatgpt'
 import { DiscordBotConfig } from '../../integrations/discord/types'
+import { BotConfig } from '../../global'
 
 const messages: { [key: string]: any[] } = {}
 
@@ -17,7 +18,7 @@ export const getPreviousMessages = (
 }
 
 export const setPreviousMessage = async (
-	config: DiscordBotConfig,
+	config: BotConfig,
 	channelId: string,
 	userMessage: string,
 	assistantMessage: string
@@ -27,7 +28,6 @@ export const setPreviousMessage = async (
 	if (messages[channelId].length > 10) {
 		messages[channelId].splice(0, 2)
 	}
-
 	const userMessageTokens = estimateChatGPTTokens(userMessage)
 	const assistantMessageTokens = estimateChatGPTTokens(assistantMessage)
 

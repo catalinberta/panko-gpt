@@ -42,7 +42,7 @@ export const deleteWhatsappConfigById = (_id: string) =>
 export const updateWhatsappConfigById = (
 	id: string,
 	values: Record<string, any>
-) => WhatsappConfigModel.findByIdAndUpdate(id, values)
+) => WhatsappConfigModel.findByIdAndUpdate(id, values, {new: true}).then(user => user?.toObject())
 
 migrateCollectionsToUUIDv4(WhatsappConfigModel).catch(err => {
 	console.error('Migration failed:', err)

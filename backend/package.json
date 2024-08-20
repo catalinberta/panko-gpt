@@ -1,7 +1,7 @@
 {
 	"name": "panko-gpt",
-	"version": "0.4.0",
-	"description": "PankoGPT Service",
+	"version": "0.5.0",
+	"description": "PankoGPT Backend - ChatGPT bot creation platform",
 	"main": "index.js",
 	"directories": {
 		"test": "tests"
@@ -55,7 +55,6 @@
 		"puppeteer-extra": "^3.3.6",
 		"puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
 		"puppeteer-extra-plugin-stealth": "^2.11.2",
-		"qrcode-terminal": "^0.12.0",
 		"telegraf": "^4.16.3",
 		"typescript": "5.4.2",
 		"underscore": "^1.12.1",

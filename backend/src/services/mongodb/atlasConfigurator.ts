@@ -25,10 +25,10 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 		result => result.username === atlasDefaults.username
 	)
 	if (!pankoUsername) {
-		console.error('No username found. Creating...')
+		console.error('Atlas Index: No username found. Creating...')
 
 		const username = await createUsername(client)
-		console.log('Created username:', username)
+		console.log('Atlas Index: Created username:', username)
 	} else {
 		updateUsername(client)
 	}
@@ -60,11 +60,11 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 			)
 			return
 		}
-		console.log('Using specified cluster:', customClusterName)
+		console.log('Atlas Index: Using specified cluster:', customClusterName)
 	} else {
 		if (clusters.length) {
 			cluster = clusters[0]
-			console.log('Using first available cluster:', cluster.name)
+			console.log('Atlas Index: Using first available cluster:', cluster.name)
 		} else {
 			console.error(
 				'No clusters found. Please create a cluster in the Atlas account first.'
@@ -105,7 +105,7 @@ export const configureIndex = async () => {
 	let index = await getAtlasSearchIndex()
 
 	if (!index) {
-		console.log('No index found, creating one...')
+		console.log('Atlas Index: No index found, creating one...')
 		index = await createAtlasSearchIndex()
 	}
 	if ('error' in index) {
@@ -114,7 +114,7 @@ export const configureIndex = async () => {
 		return
 	} else if(index) {
 		updateSettings({hasVectorDataSearchIndex: true});
-		console.log('Using index:', index.name)
+		console.log('Atlas Index: Using index:', index.name)
 	} else {
 		updateSettings({hasVectorDataSearchIndex: false});
 	}
