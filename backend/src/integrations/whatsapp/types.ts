@@ -5,6 +5,7 @@ export interface WhatsappBotConfig {
 	linked: boolean
 	openAiKey: string
 	context: string
+	onlyContacts: boolean;
 	botStatusText?: string | null
 	enabled?: boolean | null
 	detectLanguages?: string[] | null

@@ -24,6 +24,7 @@ const schema = z.object({
 	linked: z.boolean().default(false),
 	context: z.string().min(1),
 	knowledgebase: z.string(),
+	onlyContacts: z.boolean(),
 	functionInternet: z.boolean(),
 	functionTime: z.boolean()
 })
@@ -38,6 +39,7 @@ const defaultValues = {
 	botKey: false,
 	context: '',
 	knowledgebase: '',
+	onlyContacts: false,
 	functionInternet: true,
 	functionTime: true
 }
@@ -252,9 +254,9 @@ const WhatsappBotForm: React.FC = () => {
 									Enabled
 								</span>
 							</label>
-								<p className="mt-1 text-sm leading-6 text-gray-400">
-									Toggle bot's connection on and off
-								</p>
+							<p className="mt-1 text-sm leading-6 text-gray-400">
+								Toggle bot's connection on and off
+							</p>
 							<div className="border-b border-gray-900/10 pb-12">
 								<div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 									<div className="col-span-full">
@@ -336,7 +338,7 @@ const WhatsappBotForm: React.FC = () => {
 											></textarea>
 										</div>
 										<p className="mt-3 text-sm leading-6 text-gray-400">
-											Properly format each instruction with a start and end, for
+											It helps if you properly format multiple instructions with a start and end, for
 											example:
 										</p>
 										<p className="text-sm leading-6 text-gray-400">
@@ -345,6 +347,22 @@ const WhatsappBotForm: React.FC = () => {
 										</p>
 									</div>
 								</div>
+								<label className="inline-flex items-center mt-10 cursor-pointer">
+									<input
+										type="checkbox"
+										className="sr-only peer"
+										{...register('onlyContacts')}
+									/>
+									<div
+										className={`relative w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-white rounded-full peer bg-gray-600 peer-checked:bg-yellow-300 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-gray-600`}
+									></div>
+									<span className="ms-3 text-sm font-medium text-gray-300">
+										Respond only to contacts
+									</span>
+								</label>
+								<p className="mt-1 text-sm leading-6 text-gray-400">
+									Whether to respond to anyone or only to contacts on the linked device.
+								</p>
 								{botId !== 'new' && enabled && (
 									<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 ">
 										<div className="col-span-full">
@@ -431,7 +449,7 @@ const WhatsappBotForm: React.FC = () => {
 									<div className="mt-2">
 										<textarea
 											rows={10}
-											placeholder="- Sally is one of the members, she works in HR and moderates this server;"
+											placeholder="Sally is one of the members, she works in HR and moderates this server&#10;Jerry is ...well, Jerry"
 											className="bg-gray-300 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-yellow-400 sm:text-sm sm:leading-6"
 											{...register('knowledgebase')}
 										></textarea>

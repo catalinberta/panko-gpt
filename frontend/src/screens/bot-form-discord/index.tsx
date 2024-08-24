@@ -401,7 +401,7 @@ const DiscordBotForm: React.FC = () => {
 											</div>
 										)}
 										<p className="mt-3 text-sm leading-6 text-gray-400">
-											Properly format each instruction with a start and end, for
+											It helps if you properly format multiple instructions with a start and end, for
 											example:
 										</p>
 										<p className="text-sm leading-6 text-gray-400">
@@ -463,7 +463,7 @@ const DiscordBotForm: React.FC = () => {
 									<div className="mt-2">
 										<textarea
 											rows={10}
-											placeholder="- Sally is one of the members, she works in HR and moderates this server;"
+											placeholder="Sally is one of the members, she works in HR and moderates this server&#10;Jerry is ...well, Jerry"
 											className="bg-gray-300 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-yellow-400 sm:text-sm sm:leading-6"
 											{...register('knowledgebase')}
 										></textarea>

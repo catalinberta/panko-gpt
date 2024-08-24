@@ -35,6 +35,7 @@ export interface WhatsappConfig {
 	key: string
 	enabled: boolean
 	context: string
+	onlyContacts: boolean;
 	internalName?: string
 	botStatusText?: string
 	detectLanguages?: string[]
