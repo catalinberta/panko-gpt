@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { WhatsappBotConfig } from './types'
 import {
 	getWhatsappConfigById,
@@ -163,7 +162,7 @@ export const restartWhatsappClient = async (id: string) => {
 		if(!config) {
 			console.log('No config found to restart');
 		}
-		console.log('Restarting', config.internalName || config.name);
+		console.log('Restarting', config.internalName);
 	
 		botInstances[id]?.destroy()
 		delete botInstances[id];
