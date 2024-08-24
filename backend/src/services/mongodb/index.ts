@@ -7,7 +7,11 @@ import { atlasDefaults } from '../../constants'
 
 export const connectToMongoDB = async (mongoDbUrl: string, dbName: string) => {
 	return await mongoose.connect(mongoDbUrl, {
-		dbName
+		dbName,
+		connectTimeoutMS: 0,
+		socketTimeoutMS: 0,
+		maxIdleTimeMS: 0,
+		serverSelectionTimeoutMS: 0
 	})
 }
 

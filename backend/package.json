@@ -1,6 +1,6 @@
 {
 	"name": "panko-gpt",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "PankoGPT Backend - ChatGPT bot creation platform",
 	"main": "index.js",
 	"directories": {
@@ -10,10 +10,6 @@
 		"test": "echo \"Warning: Tests are not implemented\"",
 		"dev": "ts-node-dev --respawn src/index.ts",
 		"build": "tsc",
-		"docker:build:dev": "docker compose build",
-		"docker:up:dev": "docker compose build",
-		"docker:build:prod": "docker compose -f ./docker-compose.prod.yml build",
-		"docker:up:prod": "docker compose -f ./docker-compose.prod.yml build",
 		"lint": "eslint ./src --ext .ts"
 	},
 	"author": "Catalin Berta",

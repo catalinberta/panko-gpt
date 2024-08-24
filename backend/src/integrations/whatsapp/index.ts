@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { WhatsappBotConfig } from './types'
 import {
 	getWhatsappConfigById,
@@ -8,7 +7,7 @@ import {
 import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
 import { getKnowledebaseContext } from '../../utils'
-import { ChatId, Client, LocalAuth } from 'whatsapp-web.js';
+import { ChatId, Client, LocalAuth, Contact } from 'whatsapp-web.js';
 import { getPreviousMessages, setPreviousMessage } from '../../services/previous-messages'
 
 const botInstances: { [key: string]: Client } = {}
@@ -29,17 +28,20 @@ const createOnMessageHandler = (
 	client.on('message', async msg => {
 		const chat = await msg.getChat()
 		const isGroup = chat.isGroup;
+		const contact = await chat.getContact();
 		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
 		const currentTimestamp = Math.round(Date.now() / 1000)
 		const messageTimestamp = msg.timestamp;
 		const maxAgeInSeconds = 60;
 
+		if(config.onlyContacts && !isGroup && !contact.isMyContact) return;
 		if(currentTimestamp - messageTimestamp > maxAgeInSeconds) return;
 		if(isGroup && !isMentioned) return;
 
 		const author = await msg.getContact();
 		const authorName = author.pushname || author.name || author.shortName; 
 
+		chat.sendStateTyping();
 		const userMessage: string = `${authorName}: ${msg.body}`;
 
 		const params: ChatCompletionCreateParams = await getGptParamsObject(
@@ -70,7 +72,7 @@ const createOnMessageHandler = (
 		const assistantMessage = chatgptResponse?.response?.choices[0].message.content;
 
 		if (!assistantMessage) return
-
+ 
 		await setPreviousMessage(
 			config,
 			msg.from,
@@ -79,7 +81,12 @@ const createOnMessageHandler = (
 		)
 
 		try {
-			msg.reply(assistantMessage)
+			if(isGroup) {
+				msg.reply(assistantMessage)
+			} else {
+				chat.sendMessage(assistantMessage)
+			}
+			
 		} catch (e) {
 			msg.reply("WhatsApp didn't let me send my reply.")
 			console.error(`Error sending message to WhatsApp`, e)
@@ -151,12 +158,15 @@ export const createWhatsappClient = async (
 
 export const restartWhatsappClient = async (id: string) => {
 	try {
-		await botInstances[id]?.destroy()
 		const config = await getWhatsappConfigById(id)
-		console.log('Restarting', config.internalName);
-		if (config) {
-			await createWhatsappClient(config)
+		if(!config) {
+			console.log('No config found to restart');
 		}
+		console.log('Restarting', config.internalName);
+	
+		botInstances[id]?.destroy()
+		delete botInstances[id];
+		await createWhatsappClient(config)
 	} catch (e) {
 		console.log(
 			'Error restarting Whatsapp Bot with id:',
@@ -169,8 +179,8 @@ export const restartWhatsappClient = async (id: string) => {
 
 export const unlinkWhatsappClient = async (id: string) => {
 	try {
-		await botInstances[id]?.logout()
-		await botInstances[id]?.destroy()
+		botInstances[id]?.logout()
+		botInstances[id]?.destroy()
 		delete botInstances[id]
 	} catch (e) {
 		console.log('Error unlinking whatsapp', e);
@@ -179,8 +189,7 @@ export const unlinkWhatsappClient = async (id: string) => {
 
 export const stopWhatsappClient = async (id: string) => {
 	try {
-		await botInstances[id]?.logout()
-		await botInstances[id]?.destroy()
+		botInstances[id]?.destroy()
 		delete botInstances[id]
 	} catch (e) {
 		console.log('Error stopping Whatsapp Bot with id:', id, 'Error message:', e)

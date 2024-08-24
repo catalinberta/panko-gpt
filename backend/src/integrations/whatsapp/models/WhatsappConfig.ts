@@ -4,6 +4,7 @@ import { BaseConfigSchema, updateKnowledgebase } from '../../../db/BaseConfig'
 import { migrateCollectionsToUUIDv4 } from '../../../db/migrations'
 const WhatsappConfigSchema = new mongoose.Schema({
 	...BaseConfigSchema.obj,
+	onlyContacts: { type: Boolean, default: false },
 	linked: { type: Boolean, default: false },
 	qrcode: { type: String, default: ''}
 })

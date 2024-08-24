@@ -66,7 +66,7 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 			cluster = clusters[0]
 			console.log('Atlas Index: Using first available cluster:', cluster.name)
 		} else {
-			console.error(
+			console.error( 
 				'No clusters found. Please create a cluster in the Atlas account first.'
 			)
 			return

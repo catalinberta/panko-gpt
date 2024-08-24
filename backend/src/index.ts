@@ -13,8 +13,8 @@ import atlasConfigurator, {
 import { connectToDb } from './db/connect'
 
 const isDev = process.env.NODE_ENV === 'development'
-
 const app = express()
+
 app.use(
 	cors({
 		credentials: true
@@ -28,7 +28,7 @@ app.use('/api', router())
 
 const pathToFrontend = path.join(
 	__dirname,
-	isDev ? '../../frontend/dist' : '../../frontend/dist'
+	'../../frontend/dist'
 )
 app.use((req, res, next) => {
 	if (/(.ico|.js|.css|.jpg|.png|.map)$/i.test(req.path)) {
@@ -43,12 +43,13 @@ app.use((req, res, next) => {
 app.use(express.static(pathToFrontend))
 
 const server = http.createServer(app)
-
 const serverPort = 5002
+
 server.listen(serverPort, () => {
 	console.log(`API running on http://localhost:${serverPort}`)
-})
-const init = async () => {
+});
+
+(async () => {
 	const mongoDbUrl = await atlasConfigurator()
 	if (!mongoDbUrl) {
 		console.error('Could not get MongoDB URL')
@@ -58,5 +59,4 @@ const init = async () => {
 	await connectToDb(mongoDbUrl)
 	integrations()
 	await configureIndex()
-}
-init()
+})();
