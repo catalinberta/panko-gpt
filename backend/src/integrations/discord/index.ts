@@ -1,18 +1,14 @@
 import 'dotenv/config'
 import { ActivityType, Client, GatewayIntentBits, Message } from 'discord.js'
-import { getKnowledebaseContext, sendDiscordMessage } from '../../utils'
-import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
-import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
-import {
-	getPreviousMessages,
-	setPreviousMessage
-} from '../../services/previous-messages'
+import { sendDiscordMessage } from '../../utils'
+import { queryGPT } from '../../services/chatgpt'
 import {
 	getDiscordMessage,
 	sendDiscordTypingInterval
 } from './utils'
 import { getDiscordConfigById, getDiscordConfigs } from './models/DiscordConfig'
 import { DiscordBotConfig } from './types'
+import { MessageContent } from '@langchain/core/messages'
 
 const botInstances: { [key: string]: Client } = {}
 
@@ -33,20 +29,9 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 		const discordMessage = await getDiscordMessage(client, message)
 		const typingInterval = await sendDiscordTypingInterval(message)
 		
-		const params: ChatCompletionCreateParams = await getGptParamsObject(
-			config
-		)
-		if (config.context) {
-			await getKnowledebaseContext(discordMessage.userMessage, params, config)
-		}
-		getPreviousMessages(params, message.channelId)
-		params.messages.push({
-			role: 'user',
-			content: discordMessage.messageWithReply
-		})
-		let chatgptResponse
+		let gptResponse: MessageContent;
 		try {
-			chatgptResponse = await gptQuery(config.openAiKey, params)
+			gptResponse = await queryGPT(config, discordMessage.messageWithReply, message.channelId);
 		} catch (e) {
 			console.log(e)
 			sendDiscordMessage(
@@ -57,24 +42,13 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 			return
 		}
 		clearInterval(typingInterval)
-		if (chatgptResponse?.error) {
-			message.reply(chatgptResponse.error)
-			return
-		}
-		const assistantMessage =
-			chatgptResponse?.response?.choices[0].message.content
-		if (!assistantMessage) return
-		await setPreviousMessage(
-			config,
-			message.channelId,
-			discordMessage.userMessage,
-			assistantMessage
-		)
+
 		try {
-			sendDiscordMessage(message, assistantMessage)
+			sendDiscordMessage(message, gptResponse)
 		} catch (e) {
-			message.reply("Discord didn't let me send my reply.")
-			console.error(`Error sending message to Discord`, e)
+			const errorMessage = "Discord didn't let me send the reply.";
+			message.reply(errorMessage)
+			console.error(errorMessage, e)
 		}
 	})
 }
@@ -134,6 +108,8 @@ export const restartDiscordClient = async (id: string) => {
 
 export const stopDiscordClient = async (id: string) => {
 	try {
+		const config = await getDiscordConfigById(id)
+		console.log(`${config.botName} is Offline!`)
 		await botInstances[id]?.destroy()
 		delete botInstances[id]
 	} catch (e) {

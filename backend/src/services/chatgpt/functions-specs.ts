@@ -1,5 +1,3 @@
-import { ChatCompletionTool } from 'openai/resources/index.mjs'
-
 export const getCurrentTimeFunctionSpec = {
 	name: 'currenttime',
 	description: 'Get the current time in UTC'
@@ -25,11 +23,11 @@ export const getWebPageContentFunctionSpec = {
 	}
 }
 
-export const getCurrentTimeTool: ChatCompletionTool = {
+export const getCurrentTimeTool = {
 	function: getCurrentTimeFunctionSpec,
 	type: 'function'
 }
-export const getWebPageContentTool: ChatCompletionTool = {
+export const getWebPageContentTool = {
 	function: getWebPageContentFunctionSpec,
 	type: 'function'
 }

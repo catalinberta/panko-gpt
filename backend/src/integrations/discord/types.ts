@@ -1,14 +1,7 @@
-export interface DiscordBotConfig {
-	_id: string
+import { BaseConfig } from "../../global"
+
+export interface DiscordBotConfig extends BaseConfig {
 	botName: string
-	internalName?: string | null
 	botKey: string
-	openAiKey: string
-	context: string
 	botStatusText?: string | null
-	enabled?: boolean | null
-	detectLanguages?: string[] | null
-	knowledgebase?: string
-	functionInternet?: boolean;
-	functionTime?: boolean;
 }

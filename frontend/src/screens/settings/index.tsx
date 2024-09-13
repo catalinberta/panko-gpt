@@ -13,14 +13,16 @@ import {
 	Settings as SettingsType
 } from '../../services/api/types'
 import Dropdown from '@components/dropdown'
+import { chatgptDefaults } from '@constants/chatgpt'
 
 const schema = z.object({
 	openAiKey: z.string().optional(),
-	chatGptModel: z.string(),
+	chatGptModel: z.string().min(1, "This field is required"),
+	customChatGptModel: z.boolean(),
 	atlasPublicKey: z.string(),
 	atlasPrivateKey: z.string(),
 	atlasProjectId: z.string(),
-	atlasCluster: z.string()
+	atlasCluster: z.string(),
 })
 
 type FormFields = z.infer<typeof schema>
@@ -32,7 +34,8 @@ const defaultValues = {
 	atlasCluster: '',
 	atlasDatabase: '',
 	openAiKey: '',
-	chatGptModel: ''
+	chatGptModel: chatgptDefaults.model,
+	customChatGptModel: false
 }
 
 const Settings: React.FC = () => {
@@ -55,7 +58,7 @@ const Settings: React.FC = () => {
 	})
 	const params = useParams()
 	const settingsCategoryParam = params.category || 'gpt'
-	const openAiKey = watch('openAiKey')
+	const { openAiKey, customChatGptModel } = watch()
 	const formSteps = useMemo(
 		() => [
 			{
@@ -136,7 +139,9 @@ const Settings: React.FC = () => {
 		apiClient
 			.get<string[]>(`${ApiPaths.ChatgptModels}`)
 			.then((response) => {
-				setChatgptModels(response.data);
+				const models = response.data;
+				models.unshift("");
+				setChatgptModels(models);
 			})
 			.catch(error => {
 				console.error('Error fetching chatgpt models', error)
@@ -147,9 +152,6 @@ const Settings: React.FC = () => {
 		await apiClient.post<SettingsType>(ApiPaths.Settings, data)
 		await getSettings()
 		getAllChatgptModels();
-		if (!data.atlasPrivateKey || !data.atlasPublicKey || !data.atlasProjectId) {
-			return
-		}
 	}
 	
 	return (
@@ -188,7 +190,54 @@ const Settings: React.FC = () => {
 												)}
 											</div>
 										</div>
-										<Dropdown name="chatGptModel" label='Global ChatGPT Model' control={control} register={register} options={chatgptModels.map(model => ({label: model, value: model}))} hint="Add the Global OpenAI Key above to automatically fetch all ChatGPT models" />
+										{!customChatGptModel && <Dropdown 
+											name="chatGptModel" 
+											label='Global ChatGPT Model' 
+											control={control} 
+											error={errors.chatGptModel}
+											register={register} 
+											options={chatgptModels.map(model => ({label: model, value: model}))} 
+											hint="Hint: Specify the Global OpenAI Key at the top to automatically fetch all ChatGPT models for this dropdown" 
+										/>}
+										{customChatGptModel && 
+											<div className="col-span-full">
+												<label
+													htmlFor="street-address"
+													className="block text-sm font-medium leading-6 text-gray-300"
+												>
+													Global ChatGPT Model
+												</label>
+												<div className="mt-2">
+													<input
+														type="text"
+														placeholder="gpt-4o"
+														className={`block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2  focus:ring-yellow-300 focus:ring-inset sm:text-sm sm:leading-6`}
+														{...register('chatGptModel')}
+													/>
+												</div>
+												{errors.chatGptModel && (
+													<div className="mt-1 text-red-500 text-xs">
+														{errors.chatGptModel.message}
+													</div>
+												)}	
+											</div>
+										}
+									
+										<div className="col-span-full -mt-5 flex items-center mb-4">
+											<input
+												className="w-4 h-4 text-blue-600  rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
+												id="specify-custom-model"
+												type="checkbox"
+												{...register('customChatGptModel')}
+											/>
+											<label
+												htmlFor="specify-custom-model"
+												className="ms-2 text-sm font-medium text-gray-300"
+											>
+												Manually specify Global ChatGPT model
+											</label>
+										</div>
+
 									</>
 								)}
 								{settingsCategoryParam === 'vector-search' && (

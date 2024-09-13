@@ -4,11 +4,8 @@ import {
 	getWhatsappConfigs,
 	updateWhatsappConfigById
 } from './models/WhatsappConfig'
-import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
-import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
-import { getKnowledebaseContext } from '../../utils'
-import { ChatId, Client, LocalAuth, Contact } from 'whatsapp-web.js';
-import { getPreviousMessages, setPreviousMessage } from '../../services/previous-messages'
+import { queryGPT } from '../../services/chatgpt'
+import { ChatId, Client, LocalAuth } from 'whatsapp-web.js';
 
 const botInstances: { [key: string]: Client } = {}
 
@@ -44,47 +41,21 @@ const createOnMessageHandler = (
 		chat.sendStateTyping();
 		const userMessage: string = `${authorName}: ${msg.body}`;
 
-		const params: ChatCompletionCreateParams = await getGptParamsObject(
-			config
-		)
-		if (config.knowledgebase) {
-			await getKnowledebaseContext(userMessage, params, config)
-		}
-
-		getPreviousMessages(params, msg.from)
-		params.messages.push({
-			role: 'user',
-			content: userMessage
-		})
-
-		let chatgptResponse
+		let gptResponse
 		try {
-			chatgptResponse = await gptQuery(config.openAiKey, params)
+			gptResponse = await queryGPT(config, userMessage, msg.from);
 		} catch (e) {
 			console.log(e)
 			msg.reply('Ewps, error from chatgpt api :pleading_face:')
 			return
 		}
-		if (chatgptResponse?.error) {
-			msg.reply(chatgptResponse.error)
-			return
-		}
-		const assistantMessage = chatgptResponse?.response?.choices[0].message.content;
-
-		if (!assistantMessage) return
- 
-		await setPreviousMessage(
-			config,
-			msg.from,
-			userMessage,
-			assistantMessage
-		)
+		if(typeof gptResponse !== 'string') return;
 
 		try {
 			if(isGroup) {
-				msg.reply(assistantMessage)
+				msg.reply(gptResponse)
 			} else {
-				chat.sendMessage(assistantMessage)
+				chat.sendMessage(gptResponse)
 			}
 			
 		} catch (e) {

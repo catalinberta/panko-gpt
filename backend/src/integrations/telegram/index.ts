@@ -4,13 +4,8 @@ import {
 	getTelegramConfigById,
 	getTelegramConfigs
 } from '../../integrations/telegram/models/TelegramConfig'
-import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
-import { getGptParamsObject, gptQuery } from '../../services/chatgpt'
-import {
-	getPreviousMessages,
-	setPreviousMessage
-} from '../../services/previous-messages'
-import { getKnowledebaseContext } from '../../utils'
+import { queryGPT } from '../../services/chatgpt'
+import { MessageContent } from '@langchain/core/messages'
 
 const botInstances: { [key: string]: Telegraf<Context> } = {}
 
@@ -38,40 +33,17 @@ const createOnMessageHandler = (
 		const userMessage: string = ctx.message.text
 		ctx.sendChatAction('typing')
 
-		const params: ChatCompletionCreateParams = await getGptParamsObject(
-			config
-		)
-		if (config.knowledgebase) {
-			await getKnowledebaseContext(userMessage, params, config)
-		}
-		getPreviousMessages(params, ctx.message.chat.id.toString())
-		params.messages.push({
-			role: 'user',
-			content: userMessage
-		})
-		let chatgptResponse
+		let gptResponse: MessageContent;
 		try {
-			chatgptResponse = await gptQuery(config.openAiKey, params)
+			gptResponse = await queryGPT(config, userMessage, ctx.message.chat.id.toString());
 		} catch (e) {
 			console.log(e)
 			ctx.reply('Ewps, error from chatgpt api :pleading_face:')
 			return
 		}
-		if (chatgptResponse?.error) {
-			ctx.reply(chatgptResponse.error)
-			return
-		}
-		const assistantMessage =
-			chatgptResponse?.response?.choices[0].message.content
-		if (!assistantMessage) return
-		await setPreviousMessage(
-			config,
-			ctx.message.chat.id.toString(),
-			userMessage,
-			assistantMessage
-		)
+		if(typeof gptResponse !== 'string') return;
 		try {
-			ctx.reply(assistantMessage)
+			ctx.reply(gptResponse)
 		} catch (e) {
 			ctx.reply("Telegram didn't let me send my reply.")
 			console.error(`Error sending message to Telegram`, e)

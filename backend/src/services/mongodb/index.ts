@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import mongoose from 'mongoose'
 import atlasClient, { AtlasClient, AtlasError } from 'mongodb-atlas-api-client'
-import { getSettings, updateSettings } from '../../db/Settings'
+import { getSettings } from '../../db/Settings'
 import { AtlasSearchIndexDefinition } from '../../api/types'
 import { atlasDefaults } from '../../constants'
 

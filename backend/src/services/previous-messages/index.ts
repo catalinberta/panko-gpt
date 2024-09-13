@@ -1,20 +1,14 @@
-import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { estimateChatGPTTokens } from '../../utils'
-import openai from '../chatgpt'
-import { DiscordBotConfig } from '../../integrations/discord/types'
 import { BotConfig } from '../../global'
+import { ChatOpenAI } from '@langchain/openai'
+import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 
 const messages: { [key: string]: any[] } = {}
 
 export const getPreviousMessages = (
-	params: ChatCompletionCreateParams,
 	channelId: string
 ) => {
-	if (messages[channelId]) {
-		messages[channelId].map(message => {
-			params.messages.push(message)
-		})
-	}
+	return messages[channelId];
 }
 
 export const setPreviousMessage = async (
@@ -31,35 +25,25 @@ export const setPreviousMessage = async (
 	const userMessageTokens = estimateChatGPTTokens(userMessage)
 	const assistantMessageTokens = estimateChatGPTTokens(assistantMessage)
 
+	const model = new ChatOpenAI({
+		openAIApiKey: config.openAiKey, 
+		model: 'gpt-4o-mini'
+	});
+	
 	if (userMessageTokens > tokenLimit) {
-		const openaiInstance = openai(config.openAiKey)
-		openaiInstance.chat.completions
-			.create({
-				model: 'gpt-4o-mini',
-				temperature: 0,
-				messages: [
-					{
-						role: 'system',
-						content: `Rewrite the following text in less than ${tokenLimit} tokens.`
-					},
-					{
-						role: 'user',
-						content: userMessage
-					}
-				]
+		try {
+			const modelMessagesForUser = [];
+			modelMessagesForUser.push(new SystemMessage(`Rewrite the following text in less than ${tokenLimit} tokens.`));
+			modelMessagesForUser.push(new HumanMessage(userMessage));
+			const gptResponseForUser = await model.invoke(modelMessagesForUser);
+			messages[channelId].push({
+				role: 'assistant',
+				content: gptResponseForUser.content
 			})
-			.then(response => {
-				messages[channelId].push({
-					role: 'user',
-					content: response.choices[0].message.content!
-				})
-			})
-			.catch((e: Error) => {
-				console.log(
-					'Got error when requesting ChatGPT to summarize userMessage,',
-					e
-				)
-			})
+		}
+		catch(e) {
+			console.log('Got error when requesting ChatGPT to summarize userMessage', e);
+		}
 	} else {
 		messages[channelId].push({
 			role: 'user',
@@ -67,34 +51,19 @@ export const setPreviousMessage = async (
 		})
 	}
 	if (assistantMessageTokens > tokenLimit) {
-		const openaiInstance = openai(config.openAiKey)
-		openaiInstance.chat.completions
-			.create({
-				model: 'gpt-4o-mini',
-				temperature: 0,
-				messages: [
-					{
-						role: 'system',
-						content: `Rewrite the following text in less than ${tokenLimit} tokens.`
-					},
-					{
-						role: 'user',
-						content: assistantMessage
-					}
-				]
+		try {
+			const modelMessagesForassistant = [];
+			modelMessagesForassistant.push(new SystemMessage(`Rewrite the following text in less than ${tokenLimit} tokens.`));
+			modelMessagesForassistant.push(new HumanMessage(userMessage));
+			const gptResponseForAssistant = await model.invoke(modelMessagesForassistant);
+			messages[channelId].push({
+				role: 'assistant',
+				content: gptResponseForAssistant.content
 			})
-			.then(response => {
-				messages[channelId].push({
-					role: 'assistant',
-					content: response.choices[0].message.content!
-				})
-			})
-			.catch((e: Error) => {
-				console.log(
-					'Got error when requesting ChatGPT to summarize assistantMessage,',
-					e
-				)
-			})
+		}
+		catch(e) {
+			console.log('Got error when requesting ChatGPT to summarize assistantMessage', e);
+		}
 	} else {
 		messages[channelId].push({
 			role: 'assistant',

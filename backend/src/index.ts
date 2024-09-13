@@ -11,6 +11,7 @@ import atlasConfigurator, {
 	configureIndex
 } from './services/mongodb/atlasConfigurator'
 import { connectToDb } from './db/connect'
+import { hideCredentialsFromMongoDbUrl } from './utils'
 
 const isDev = process.env.NODE_ENV === 'development'
 const app = express()
@@ -25,6 +26,14 @@ app.use(compression())
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use('/api', router())
+
+process.on('unhandledRejection', (reason: Error, promise) => {
+	if (reason.name === 'ProtocolError') {
+		console.error('Unhandled ProtocolError:', reason.message);
+	} else {
+		console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+	}
+});
 
 const pathToFrontend = path.join(
 	__dirname,
@@ -55,7 +64,7 @@ server.listen(serverPort, () => {
 		console.error('Could not get MongoDB URL')
 		return
 	}
-	console.log('Using MongoDB URL', mongoDbUrl)
+	console.log('Connecting to MongoDB URL', hideCredentialsFromMongoDbUrl(mongoDbUrl))
 	await connectToDb(mongoDbUrl)
 	integrations()
 	await configureIndex()
