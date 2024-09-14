@@ -1,4 +1,4 @@
-FROM node:21
+FROM node:21-slim
 
 WORKDIR /usr/src
 RUN apt-get update \
@@ -11,6 +11,7 @@ COPY backend/package-lock.json backend/package-lock.json
 COPY backend/tsconfig.json backend/tsconfig.json
 
 COPY frontend/src frontend/src
+COPY frontend/public frontend/public
 COPY frontend/package.json frontend/package.json
 COPY frontend/package-lock.json frontend/package-lock.json
 COPY frontend/tsconfig.json frontend/tsconfig.json

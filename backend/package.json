@@ -1,6 +1,6 @@
 {
 	"name": "panko-gpt",
-	"version": "0.5.1",
+	"version": "0.6.0",
 	"description": "PankoGPT Backend - ChatGPT bot creation platform",
 	"main": "index.js",
 	"directories": {
@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"test": "echo \"Warning: Tests are not implemented\"",
-		"dev": "ts-node-dev --respawn src/index.ts",
+		"dev": "ts-node-dev --exit-child --respawn src/index.ts",
 		"build": "tsc",
 		"lint": "eslint ./src --ext .ts"
 	},
@@ -34,6 +34,9 @@
 	},
 	"dependencies": {
 		"@google-cloud/translate": "^8.2.0",
+		"@langchain/core": "^0.2.31",
+		"@langchain/openai": "^0.2.10",
+		"@langchain/textsplitters": "^0.0.3",
 		"@types/jsdom": "^21.1.6",
 		"body-parser": "^1.20.2",
 		"compression": "^1.7.4",
@@ -42,19 +45,20 @@
 		"discord.js": "^14.14.1",
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
+		"gpt-3-encoder": "^1.1.4",
 		"http": "^0.0.1-security",
 		"jsdom": "^24.0.0",
+		"langchain": "^0.2.18",
 		"mongodb-atlas-api-client": "^3.19.0",
 		"mongoose": "^8.3.0",
-		"openai": "^4.29.1",
 		"puppeteer": "^22.14.0",
 		"puppeteer-extra": "^3.3.6",
 		"puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
 		"puppeteer-extra-plugin-stealth": "^2.11.2",
 		"telegraf": "^4.16.3",
-		"typescript": "5.4.2",
-		"underscore": "^1.12.1",
+		"typescript": "5.5.4",
 		"uuid": "^9.0.1",
-		"whatsapp-web.js": "^1.25.0"
+		"whatsapp-web.js": "^1.25.0",
+		"zod": "^3.23.8"
 	}
 }

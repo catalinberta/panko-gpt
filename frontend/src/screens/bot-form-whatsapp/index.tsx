@@ -16,13 +16,16 @@ import SideMenu from '../../components/side-menu'
 import WebpageContent from '@components/_functions/webpagecontent'
 import CurrentTime from '@components/_functions/currenttime'
 import LinkModal from './LinkModal'
+import Dropdown from '@components/dropdown'
 
 const schema = z.object({
 	enabled: z.boolean(),
 	internalName: z.string(),
-	openAiKey: z.string().min(1),
+	openAiKey: z.string().min(1, "This field is required"),
+	chatGptModel: z.string().min(1, "This field is required"),
+	customChatGptModel: z.boolean(),
 	linked: z.boolean().default(false),
-	context: z.string().min(1),
+	context: z.string().min(1, "This field is required"),
 	knowledgebase: z.string(),
 	onlyContacts: z.boolean(),
 	functionInternet: z.boolean(),
@@ -36,6 +39,8 @@ const defaultValues = {
 	botName: '',
 	internalName: '',
 	openAiKey: '',
+	chatGptModel: '',
+	customChatGptModel: false,
 	botKey: false,
 	context: '',
 	knowledgebase: '',
@@ -56,10 +61,12 @@ export interface FormStep {
 const WhatsappBotForm: React.FC = () => {
 	const [formStep, setFormStep] = useState<FormStep | null>(null)
 	const [settings, setSettings] = useState<Settings | null>(null)
+	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
 	const [contextChunks, setContextChunks] = useState<string[]>([]);
 	const [contextChunksLoading, setContextChunksLoading] = useState(false);
 	const [showChunksModal, setShowChunksModal] = useState(false);
 	const [showLinkModal, setShowLinkModal] = useState(false);
+	const [showFormSuccess, setShowFormSuccess] = useState(false);
 	const [botId, setBotId] = useState('new');
 	const [botConfig, setBotConfig] = useState<WhatsappConfig | null>(null);
 	const navigate = useNavigate()
@@ -76,7 +83,7 @@ const WhatsappBotForm: React.FC = () => {
 		resolver: zodResolver(schema)
 	})
 
-	const { openAiKey, enabled } = watch()
+	const { openAiKey, enabled, chatGptModel, customChatGptModel } = watch()
 
 	const params = useParams()
 
@@ -209,6 +216,38 @@ const WhatsappBotForm: React.FC = () => {
 		)
 	}
 
+	const onGlobalChatGptModelChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { checked } = e.target
+		checked && setValue(
+			'chatGptModel',
+			settings?.chatGptModel || ""
+		)
+	}
+
+	useEffect(() => {
+		getAllChatgptModels();
+	}, []);
+
+	const getAllChatgptModels = () => {
+		apiClient
+			.get<string[]>(`${ApiPaths.ChatgptModels}`)
+			.then((response) => {
+				const models = response.data;
+				models.unshift("");
+				setChatgptModels(models);
+			})
+			.catch(error => {
+				console.error('Error fetching chatgpt models', error)
+			})
+	}
+
+	const showFormSuccessToast = () => {
+		setShowFormSuccess(true);
+		setTimeout(() => {
+			setShowFormSuccess(false);
+		}, 2000);
+	}
+
 	const deleteBot = async (id: string) => {
 		await apiClient.delete<WhatsappConfig>(`${ApiPaths.WhatsappConfigs}/${id}`)
 		navigate(`${RoutePaths.Integrations}/whatsapp`)
@@ -218,7 +257,7 @@ const WhatsappBotForm: React.FC = () => {
 			`${ApiPaths.WhatsappConfigs}/${botId}`,
 			data
 		)
-		navigate(`${RoutePaths.Integrations}/whatsapp`)
+		showFormSuccessToast();
 	}
 	const onCreate: SubmitHandler<FormFields> = async data => {
 		const response = await apiClient.post<WhatsappConfig>(ApiPaths.WhatsappConfigs, data)
@@ -320,6 +359,69 @@ const WhatsappBotForm: React.FC = () => {
 											</div>
 										)}
 									</div>
+									{!customChatGptModel && <Dropdown 
+										name="chatGptModel" 
+										label='ChatGPT Model' 
+										control={control} 
+										error={errors.chatGptModel}
+										register={register} 
+										options={chatgptModels.map(model => ({label: model, value: model}))} 
+										hint="Hint: Specify the OpenAI Key in Settings to automatically fetch all ChatGPT models for this dropdown" 
+									/>}
+									{customChatGptModel && 
+										<div className="col-span-full">
+											<label
+												htmlFor="street-address"
+												className="block text-sm font-medium leading-6 text-gray-300"
+											>
+												ChatGPT Model
+											</label>
+											<div className="mt-2">
+												<input
+													type="text"
+													placeholder="gpt-4o"
+													className={`block w-full rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2  focus:ring-yellow-300 focus:ring-inset sm:text-sm sm:leading-6`}
+													{...register('chatGptModel')}
+												/>
+											</div>
+											{errors.chatGptModel && (
+												<div className="mt-1 text-red-500 text-xs">
+													{errors.chatGptModel.message}
+												</div>
+											)}	
+										</div>
+									}
+									<div className="col-span-full -mt-5 flex items-center">
+										<input
+											className="w-4 h-4 text-blue-600  rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
+											id="specify-custom-model"
+											type="checkbox"
+											{...register('customChatGptModel')}
+										/>
+										<label
+											htmlFor="specify-custom-model"
+											className="ms-2 text-sm font-medium text-gray-300"
+										>
+											Manually specify Global ChatGPT model
+										</label>
+									</div>
+									{settings?.chatGptModel && (
+										<div className="col-span-full flex items-center -mt-5 mb-4">
+											<input
+												className="w-4 h-4 text-blue-600  rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
+												id="global-chatgpt-model"
+												type="checkbox"
+												onChange={onGlobalChatGptModelChange}
+												checked={settings.chatGptModel === chatGptModel}
+											/>
+											<label
+												htmlFor="global-chatgpt-model"
+												className="ms-2 text-sm font-medium text-gray-300"
+											>
+												Use Global ChatGPT Model
+											</label>
+										</div>
+									)}
 								</div>
 								<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 									<div className="col-span-full">
@@ -480,7 +582,7 @@ const WhatsappBotForm: React.FC = () => {
 								</button>
 								<button
 									onClick={handleSubmit(onUpdate)}
-									disabled={isSubmitting}
+									disabled={isSubmitting || showFormSuccess}
 									className="rounded-md bg-yellow-300 disabled:bg-gray-200 px-10 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 								>
 									{isSubmitting && (
@@ -502,7 +604,11 @@ const WhatsappBotForm: React.FC = () => {
 											/>
 										</svg>
 									)}
-									Edit
+									{showFormSuccess ? (
+										<svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+											<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+										</svg>
+									) : "Edit"}
 								</button>
 							</>
 						)}

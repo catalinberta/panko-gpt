@@ -4,6 +4,7 @@
     "rootDir": "src",
     "outDir": "dist",
     "moduleResolution": "Node16",
+    "noImplicitAny": true,
     "esModuleInterop": true
   },
   "include": ["src"]

@@ -5,6 +5,7 @@ const globalOpenAiKey = process.env.GLOBAL_OPEN_AI_KEY || '';
 
 const SettingsSchema = new mongoose.Schema({
 	openAiKey: { type: String, required: false, default: globalOpenAiKey },
+	customChatGptModel: { type: Boolean, required: false, default: false },
 	chatGptModel: { type: String, required: false, default: chatGptDefaults.model },
 	atlasPublicKey: { type: String, required: false, default: '' },
 	atlasPrivateKey: { type: String, required: false, default: '' },

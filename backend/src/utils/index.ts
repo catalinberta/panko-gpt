@@ -5,40 +5,22 @@ import puppeteer from 'puppeteer-extra'
 import Stealth from 'puppeteer-extra-plugin-stealth'
 import AnonymizeUAPlugin from 'puppeteer-extra-plugin-anonymize-ua'
 import { TranslationServiceClient } from '@google-cloud/translate'
-import { ChatCompletionCreateParams } from 'openai/resources/index.mjs'
 import { BotConfig } from '../global'
 import { searchVectorData } from '../db/VectorData'
 import { getEmbeddingFromString } from '../services/chatgpt'
+import { ChatOpenAI } from '@langchain/openai';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { encode } from 'gpt-3-encoder';
+import { AIMessage, MessageContent } from '@langchain/core/messages'
 
 puppeteer.use(Stealth())
 puppeteer.use(AnonymizeUAPlugin())
 
-export const stringToChatGptResponseFormat = (message: string) => {
-	return [
-		{
-			finish_reason: 'stop',
-			index: 0,
-			message: {
-				content: message,
-				role: 'assistant'
-			}
-		}
-	]
-}
-
-export const estimateChatGPTTokens = (input: string): number => {
-	if (!input || typeof input !== 'string') return 0
-	const commonPunctuation = /[.,\/#!$%\^&\*;:{}=\-_`~()]/g
-	let normalizedInput = input.replace(commonPunctuation, ' ') // Replace punctuation with spaces
-	normalizedInput = normalizedInput.replace(/\s+/g, ' ').trim() // Normalize whitespace
-	const tokens = normalizedInput.split(' ') // Split by space to approximate tokens
-	return tokens.length
-}
-
 export const sendDiscordMessage = async (
 	message: Message,
-	assistantMessage: string
+	assistantMessage: MessageContent
 ) => {
+	if(typeof assistantMessage !== "string") return;
 	const discordCharacterLimit = 2000
 	if (assistantMessage.length >= discordCharacterLimit) {
 		;(function sendDiscordMessage(assistantMessage) {
@@ -114,7 +96,6 @@ export const extractTextFromHTML = (htmlString: string): string => {
 		let text: string = ''
 		node.childNodes.forEach((child: Node) => {
 			if (child.nodeType === 3) {
-				// Text node
 				text += (child.nodeValue || '').replace(/\s{2,}/g, ' ') + ' '
 			} else if (
 				child.nodeType === 1 &&
@@ -130,7 +111,6 @@ export const extractTextFromHTML = (htmlString: string): string => {
 	return recursiveTextExtraction(document.body)
 }
 
-// Creates a client
 const translate = new TranslationServiceClient()
 
 export const detectLanguage = async (
@@ -158,24 +138,51 @@ export const detectLanguage = async (
 	return null
 }
 
-export const splitContentIntoChunks = (content: string, maxTokens: number) => {
-	const contentTokens = estimateChatGPTTokens(content)
-	const contentChunkLength = Math.floor(
-		content.length / Math.ceil(contentTokens / maxTokens)
-	)
-	const contentChunks: string[] = []
-	if (content.length <= contentChunkLength) {
-		return [content]
+export const getKnowledebaseContext = async (
+	query: string,
+	config: BotConfig
+): Promise<AIMessage | null> => {
+	try {
+		const llm = new ChatOpenAI({openAIApiKey: config.openAiKey, model: 'gpt-4o-mini'})
+		const standaloneTemplate = "Given the following user input with possible non-essential verbose details, convert it to a standalone input by removing non-essential details but keep the prefixed name in order to use it in vector embeddings search: {userInput}";
+		const standaloneInputPrompt = PromptTemplate.fromTemplate(standaloneTemplate)
+		const standaloneInputChain = standaloneInputPrompt.pipe(llm);
+		const response = await standaloneInputChain.invoke({
+			userInput: query
+		});
+		const content = response.content as string;
+		const maxKnowledgeTokens = 400
+		const embeddingResponse = await getEmbeddingFromString(
+			config.openAiKey,
+			content
+		)
+		const results = await searchVectorData(
+			embeddingResponse.embedding,
+			config._id
+		)
+		if (!results) return null;
+		let currentTokens = 0
+		const newContext = results.map((result: any) => {
+			currentTokens += result.tokens
+			return currentTokens >= maxKnowledgeTokens ? '' : result.content
+		})
+		const stringContext = newContext.join(' ')
+		const langchainMessage = new AIMessage(stringContext);
+
+		return langchainMessage;
+	} catch (e) {
+		console.log('Error getting data from knowledgebase', e)
+		return null;
 	}
-	while (content.length > contentChunkLength) {
-		let lastSpaceIndex = content.lastIndexOf(' ', contentChunkLength)
-		if (lastSpaceIndex === -1) {
-			lastSpaceIndex = content.indexOf(' ', contentChunkLength)
-		}
-		contentChunks.push(content.substring(0, lastSpaceIndex))
-		content = content.substring(lastSpaceIndex + 1)
-	}
-	return contentChunks
+}
+
+export const sleep = (ms: number = 0): Promise<void> => {
+	return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export const countGptTokens = (text: string): number => {
+	if(!text) return 0;
+	return encode(text).length;
 }
 
 export const extractArrayFromGptChunks = (
@@ -196,37 +203,11 @@ export const extractArrayFromGptChunks = (
 	}
 }
 
-export const getKnowledebaseContext = async (
-	query: string,
-	params: ChatCompletionCreateParams,
-	config: BotConfig
-) => {
-	try {
-		const maxKnowledgeTokens = 400
-		const embeddingResponse = await getEmbeddingFromString(
-			config.openAiKey,
-			query
-		)
-		const results = await searchVectorData(
-			embeddingResponse.embedding,
-			config._id
-		)
-		if (!results) return
-		let currentTokens = 0
-		const newContext = results.map((result: any) => {
-			currentTokens += result.tokens
-			return currentTokens >= maxKnowledgeTokens ? '' : result.content
-		})
-		const stringContext = newContext.join(' ')
-		params.messages.push({
-			role: 'assistant',
-			content: stringContext
-		})
-	} catch (e) {
-		console.log('Error getting data from knowledgebase', e)
-	}
-}
-
-export const sleep = (ms: number = 0): Promise<void> => {
-	return new Promise(resolve => setTimeout(resolve, ms))
+export const hideCredentialsFromMongoDbUrl = (url: string) => {
+	return url.replace(/(mongodb\+srv:\/\/[^:]+:[^@]+)@([^?]+)(\?.+)/, (match, user, cluster, params) => {
+		const hiddenUser = `${user.slice(0, user.lastIndexOf(':') + 1)}...`;
+		const clusterParts = cluster.split('.');
+		const hiddenCluster = `${clusterParts[0].slice(0, -6)}...${clusterParts.slice(1).join('.')}`;
+		return `${hiddenUser}@${hiddenCluster}${params}`;
+	});
 }

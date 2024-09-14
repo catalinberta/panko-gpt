@@ -5,6 +5,8 @@ export interface Settings {
 	atlasProjectId?: string
 	atlasCluster?: string
 	hasVectorDataSearchIndex?: boolean
+	chatGptModel: string;
+	customChatGptModel: boolean;
 }
 
 export interface DiscordConfig {

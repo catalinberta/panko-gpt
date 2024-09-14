@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose'
 import { insertVectorData, deleteVectorDataByBotId } from './VectorData'
 import {
 	getEmbeddingFromString,
-	parseKnowledgeDataToChunks
+	parseTextToChunksArray
 } from '../services/chatgpt'
 import { v4 as uuidv4 } from 'uuid'
 import { sleep } from '../utils'
@@ -10,6 +10,8 @@ import { sleep } from '../utils'
 export const BaseConfigSchema = new mongoose.Schema({
 	_id: { type: Schema.Types.Mixed, default: uuidv4 },
 	openAiKey: { type: String, required: true },
+	chatGptModel: { type: String, required: true },
+	customChatGptModel: { type: Boolean, default: false },
 	context: { type: String, required: true },
 	internalName: { type: String, required: false },
 	knowledgebase: { type: String, required: false },
@@ -43,8 +45,8 @@ export const updateKnowledgebase = async (
 ) => {
 	if (!id || !content || !openAiKey) return
 	try {
-		const knowledgeChunks = await parseKnowledgeDataToChunks(openAiKey, content)
 		await deleteVectorDataByBotId(id)
+		const knowledgeChunks = await parseTextToChunksArray(openAiKey, content)
 		for (const knowledgeChunk of knowledgeChunks) {
 			await sleep(500)
 			const embeddingResponse = await getEmbeddingFromString(
