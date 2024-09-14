@@ -16,28 +16,6 @@ import { AIMessage, MessageContent } from '@langchain/core/messages'
 puppeteer.use(Stealth())
 puppeteer.use(AnonymizeUAPlugin())
 
-export const stringToChatGptResponseFormat = (message: string) => {
-	return [
-		{
-			finish_reason: 'stop',
-			index: 0,
-			message: {
-				content: message,
-				role: 'assistant'
-			}
-		}
-	]
-}
-
-export const estimateChatGPTTokens = (input: string): number => {
-	if (!input || typeof input !== 'string') return 0
-	const commonPunctuation = /[.,\/#!$%\^&\*;:{}=\-_`~()]/g
-	let normalizedInput = input.replace(commonPunctuation, ' ') // Replace punctuation with spaces
-	normalizedInput = normalizedInput.replace(/\s+/g, ' ').trim() // Normalize whitespace
-	const tokens = normalizedInput.split(' ') // Split by space to approximate tokens
-	return tokens.length
-}
-
 export const sendDiscordMessage = async (
 	message: Message,
 	assistantMessage: MessageContent
@@ -118,7 +96,6 @@ export const extractTextFromHTML = (htmlString: string): string => {
 		let text: string = ''
 		node.childNodes.forEach((child: Node) => {
 			if (child.nodeType === 3) {
-				// Text node
 				text += (child.nodeValue || '').replace(/\s{2,}/g, ' ') + ' '
 			} else if (
 				child.nodeType === 1 &&
@@ -134,7 +111,6 @@ export const extractTextFromHTML = (htmlString: string): string => {
 	return recursiveTextExtraction(document.body)
 }
 
-// Creates a client
 const translate = new TranslationServiceClient()
 
 export const detectLanguage = async (

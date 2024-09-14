@@ -57,7 +57,6 @@
 		"puppeteer-extra-plugin-stealth": "^2.11.2",
 		"telegraf": "^4.16.3",
 		"typescript": "5.5.4",
-		"underscore": "^1.12.1",
 		"uuid": "^9.0.1",
 		"whatsapp-web.js": "^1.25.0",
 		"zod": "^3.23.8"

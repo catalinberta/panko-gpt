@@ -13,7 +13,6 @@ import atlasConfigurator, {
 import { connectToDb } from './db/connect'
 import { hideCredentialsFromMongoDbUrl } from './utils'
 
-const isDev = process.env.NODE_ENV === 'development'
 const app = express()
 
 app.use(
@@ -27,18 +26,12 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 app.use('/api', router())
 
-process.on('unhandledRejection', (reason: Error, promise) => {
-	if (reason.name === 'ProtocolError') {
-		console.error('Unhandled ProtocolError:', reason.message);
-	} else {
-		console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-	}
-});
 
 const pathToFrontend = path.join(
 	__dirname,
 	'../../frontend/dist'
 )
+app.use(express.static(pathToFrontend))
 app.use((req, res, next) => {
 	if (/(.ico|.js|.css|.jpg|.png|.map)$/i.test(req.path)) {
 		next()
@@ -49,7 +42,15 @@ app.use((req, res, next) => {
 		res.sendFile(path.join(pathToFrontend, 'index.html'))
 	}
 })
-app.use(express.static(pathToFrontend))
+
+process.on('unhandledRejection', (reason: Error, promise) => {
+	if (reason.name === 'ProtocolError') {
+		console.error('Unhandled ProtocolError:', reason.message);
+	} else {
+		console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+		process.exit(1);
+	}
+});
 
 const server = http.createServer(app)
 const serverPort = 5002

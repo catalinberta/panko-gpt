@@ -1,4 +1,4 @@
-import { getWebPageContentFromUrl, extractTextFromHTML, estimateChatGPTTokens } from "../../../utils"
+import { getWebPageContentFromUrl, extractTextFromHTML, countGptTokens } from "../../../utils"
 import { tool } from "@langchain/core/tools"
 import { z } from "zod";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
@@ -18,7 +18,7 @@ const summarizeWebpage = async (apiKey: string, {userquery, url}: any): Promise<
 	pageContent = extractTextFromHTML(pageContent)
 
 	const chunkMaxTokenSize = 4000
-	const pageContentTokens = estimateChatGPTTokens(pageContent)
+	const pageContentTokens = countGptTokens(pageContent)
 	const pageContentChunkLength = Math.floor(
 		pageContent.length / Math.ceil(pageContentTokens / chunkMaxTokenSize)
 	)

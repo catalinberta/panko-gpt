@@ -1,4 +1,4 @@
-import { estimateChatGPTTokens } from '../../utils'
+import { countGptTokens } from '../../utils'
 import { BotConfig } from '../../global'
 import { ChatOpenAI } from '@langchain/openai'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
@@ -22,8 +22,8 @@ export const setPreviousMessage = async (
 	if (messages[channelId].length > 10) {
 		messages[channelId].splice(0, 2)
 	}
-	const userMessageTokens = estimateChatGPTTokens(userMessage)
-	const assistantMessageTokens = estimateChatGPTTokens(assistantMessage)
+	const userMessageTokens = countGptTokens(userMessage)
+	const assistantMessageTokens = countGptTokens(assistantMessage)
 
 	const model = new ChatOpenAI({
 		openAIApiKey: config.openAiKey, 

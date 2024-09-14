@@ -39,7 +39,7 @@ const defaultValues = {
 }
 
 const Settings: React.FC = () => {
-	const [settings, setSettings] = useState<SettingsType>({})
+	const [settings, setSettings] = useState<SettingsType>(defaultValues)
 	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
 	const [pankoIndex, setPankoIndex] = useState<
 		AtlasSearchIndexDefinition | false | null

@@ -45,7 +45,7 @@ const getModelsFromOpenAI = (apiKey: string, cb: (models: OpenAIModel[]) => void
 		path: '/v1/models',
 		method: 'GET',
 		headers: {
-			'Authorization': `Bearer ${apiKey}` // Replace `YOUR_API_KEY` with your actual OpenAI API key
+			'Authorization': `Bearer ${apiKey}`
 		  }
 	  };
 	  
