@@ -96,8 +96,12 @@ export const createWhatsappClient = async (
 				qrcode: qr
 			})
 		});
-		client.on('ready', () => {
+		client.on('ready', async () => {
 			console.log(`Whatsapp Client ${botName} is ready!`);
+			await updateWhatsappConfigById(config._id, {
+				linked: true,
+				qrcode: ''
+			})
 		});
 		client.on('authenticated', async () => {
 			console.log(`${botName} authenticated`)
