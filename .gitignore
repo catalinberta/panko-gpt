@@ -136,3 +136,4 @@ keys
 docker-compose.yml
 docker-compose.prod.yml
 volumes
+backend/data

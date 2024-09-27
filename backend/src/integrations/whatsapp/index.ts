@@ -76,7 +76,7 @@ export const createWhatsappClient = async (
 		},
 		authStrategy: new LocalAuth({
 			clientId: config._id,
-			dataPath: './_sessions/whatsapp'
+			dataPath: './data/_sessions/whatsapp'
 		})
 	}) 
 	
