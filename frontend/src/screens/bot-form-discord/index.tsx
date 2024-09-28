@@ -16,6 +16,7 @@ import SideMenu from '../../components/side-menu'
 import WebpageContent from '@components/_functions/webpagecontent'
 import CurrentTime from '@components/_functions/currenttime'
 import Dropdown from '@components/dropdown'
+import KnowledgebaseModal from '../../components/_modals/KnowledgebaseModal'
 
 const schema = z.object({
 	enabled: z.boolean(),
@@ -65,9 +66,7 @@ const DiscordBotForm: React.FC = () => {
 	const [settings, setSettings] = useState<Settings | null>(null)
 	const [clientId, setClientId] = useState<string | null>(null)
 	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
-	const [contextChunks, setContextChunks] = useState<string[]>([]);
-	const [contextChunksLoading, setContextChunksLoading] = useState(false);
-	const [showChunksModal, setShowChunksModal] = useState(false);
+	const [showKnowledgebaseModal, setShowKnowledgebaseModal] = useState(false);
 	const [showFormSuccess, setShowFormSuccess] = useState(false);
 	const navigate = useNavigate()
 	const {
@@ -76,6 +75,7 @@ const DiscordBotForm: React.FC = () => {
 		reset,
 		watch,
 		setValue,
+		getValues,
 		handleSubmit,
 		control
 	} = useForm<FormFields>({
@@ -84,7 +84,7 @@ const DiscordBotForm: React.FC = () => {
 	})
 	
 	const params = useParams()
-	const editBotId = params.id || 'new'
+	const botId = params.id || 'new'
 	const formStepParam = params['form-step']
 
 	const { openAiKey, chatGptModel, customChatGptModel } = watch()
@@ -97,17 +97,17 @@ const DiscordBotForm: React.FC = () => {
 				value: 'general',
 				label: 'General',
 				icon: <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/discord-bot-form/${editBotId}/general`,
+				url: `/discord-bot-form/${botId}/general`,
 				isActive: formStepParam === 'general'
 			},
 			{
 				value: 'vector-search',
 				label: 'Vector search',
 				icon: <CogIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/discord-bot-form/${editBotId}/vector-search`,
+				url: `/discord-bot-form/${botId}/vector-search`,
 				isActive: formStepParam === 'vector-search',
 				disabled:
-					editBotId === 'new'
+					botId === 'new'
 						? 'First create the bot to enable this section'
 						: false,
 				tooltip: (
@@ -125,17 +125,17 @@ const DiscordBotForm: React.FC = () => {
 				value: 'functions',
 				label: 'Functions',
 				icon: <RectangleStackIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/discord-bot-form/${editBotId}/functions`
+				url: `/discord-bot-form/${botId}/functions`
 			},
 			{
 				value: 'skills',
 				label: 'Skills',
 				icon: <RectangleStackIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/discord-bot-form/${editBotId}/skills`,
+				url: `/discord-bot-form/${botId}/skills`,
 				soon: true
 			}
 		],
-		[formStepParam, editBotId]
+		[formStepParam, botId]
 	)
 
 	const onGlobalOpenAiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -179,9 +179,9 @@ const DiscordBotForm: React.FC = () => {
 	}, [formStepParam, formSteps])
 
 	useEffect(() => {
-		if (editBotId !== 'new') {
+		if (botId !== 'new') {
 			apiClient
-				.get<DiscordConfig>(`${ApiPaths.DiscordConfigs}/${editBotId}`)
+				.get<DiscordConfig>(`${ApiPaths.DiscordConfigs}/${botId}`)
 				.then(response => {
 					reset(response.data)
 					response.data.clientId && setClientId(response.data.clientId)
@@ -192,31 +192,21 @@ const DiscordBotForm: React.FC = () => {
 		} else {
 			reset(formDefaultValues)
 		}
-	}, [editBotId, reset])
+	}, [botId, reset])
 
 	useEffect(() => {
 		apiClient.get<Settings>(ApiPaths.Settings).then(response => {
 			setSettings(response.data)
 		})
-		getChunks();
 	}, [])
 
-	const getChunks = () => {
-		setContextChunksLoading(true);
-		apiClient.get<{[key: string]: string}[]>(`${ApiPaths.Chunks}?botId=${editBotId}`).then(response => {
-			const parsedChunks = response.data.map(chunk => chunk.content)
-			setContextChunks(parsedChunks)
-			setContextChunksLoading(false);
-		})
+	const closeKnowledgebaseModal = () => {
+		setShowKnowledgebaseModal(false);
 	}
 
 	const onViewChunks = (e: MouseEvent<HTMLAnchorElement>) => {
 		e.preventDefault();
-		getChunks();
-		setShowChunksModal(true);
-	}
-	const onToggleChunksModal = () => {
-		setShowChunksModal(!showChunksModal);
+		setShowKnowledgebaseModal(true);
 	}
 
 	const showFormSuccessToast = () => {
@@ -232,9 +222,10 @@ const DiscordBotForm: React.FC = () => {
 	}
 	const onUpdate: SubmitHandler<FormFields> = async data => {
 		await apiClient.patch<DiscordConfig>(
-			`${ApiPaths.DiscordConfigs}/${editBotId}`,
+			`${ApiPaths.DiscordConfigs}/${botId}`,
 			data
 		)
+		reset(getValues(), {keepDirty: false})
 		showFormSuccessToast();
 	}
 	const onCreate: SubmitHandler<FormFields> = async data => {
@@ -589,12 +580,12 @@ const DiscordBotForm: React.FC = () => {
 					)}
 
 					<div className="mt-6 flex items-center justify-end gap-x-6">
-						{editBotId !== 'new' && (
+						{botId !== 'new' && (
 							<>
 								<button
 									type="button"
 									className="text-red-500 border  focus:ring-4 focus:outline-none  font-medium rounded-md text-sm px-5 py-2 text-center border-red-500  hover:text-white hover:bg-red-600 focus:ring-red-900"
-									onClick={deleteBot.bind(null, editBotId)}
+									onClick={deleteBot.bind(null, botId)}
 								>
 									Delete
 								</button>
@@ -631,7 +622,7 @@ const DiscordBotForm: React.FC = () => {
 							</>
 						)}
 
-						{editBotId === 'new' && (
+						{botId === 'new' && (
 							<button
 								onClick={handleSubmit(onCreate)}
 								disabled={isSubmitting}
@@ -662,49 +653,7 @@ const DiscordBotForm: React.FC = () => {
 					</div>
 				</form>
 			</main>
-
-			<div className={`${showChunksModal ? '' : 'hidden'} relative z-10`} aria-labelledby="modal-title" role="dialog" aria-modal="true">
-				<div className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity" aria-hidden="true"></div>
-				<div className="fixed  px-10 inset-0 z-10 w-screen overflow-y-auto">
-					<div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-						<div className="relative bg-gray-700 transform overflow-hidden rounded-lg  text-left shadow-xl transition-all sm:my-8 w-full">
-							<div className=" px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-								<div className="sm:flex sm:items-start">
-									<div className="mt-3 flex flex-1 flex-col text-center sm:ml-4 sm:mt-0 sm:text-left h-fit overflow-hidden">
-										<h3 className="text-base font-semibold leading-6 text-white" id="modal-title">Your structured data</h3>
-										<div className="mt-2">
-											<p className="text-sm text-white">Your knowedgebase gets structured into smaller standalone chunks and these are stored as vector embeddings. In this way, we can populate the bot's context with smaller and related content. You can view them below.</p>
-											</div>
-										{contextChunksLoading ? (
-											<div
-												className="inline-block self-center m-10 h-20 w-20 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-												role="status">
-												<span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"></span>
-											</div>
-										) : (
-											<ul role="list" className="my-5 overflow-y-auto scrollbar w-full max-h-[800px]">
-												{contextChunks.map((chunk, index) => (
-													<li key={index} className="flex bg-gray-800 rounded justify-between gap-x-6 p-2 mt-1">
-														<div className="flex min-w-0 gap-x-4">
-															<div className="min-w-0 flex-auto">
-																<p className="text-xs font-semibold leading-4 text-gray-400">{chunk}</p>
-															</div>
-														</div>
-													</li>
-												))}
-											</ul>
-										)}
-										<button onClick={getChunks} type="button" className="mx-2 w-96 self-center rounded-md bg-yellow-300 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset  hover:bg-gray-50">Refresh</button>
-									</div>
-								</div>
-							</div>
-							<div className="bg-gray-800 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-								<button onClick={onToggleChunksModal} type="button" className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Close</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			<KnowledgebaseModal show={showKnowledgebaseModal} close={closeKnowledgebaseModal} botId={botId}  />
 		</div>
 	)
 }

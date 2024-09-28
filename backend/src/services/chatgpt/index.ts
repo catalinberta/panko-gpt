@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext } from '../../utils'
+import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils'
 import { chatGptDefaults } from '../../constants'
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { BotConfig } from '../../global'
@@ -113,23 +113,23 @@ export const getEmbeddingFromString = async (
 }
 
 export const parseTextToChunksArray = async (apiKey: string, text: string) => {
+	const textBatchSize = 8000;
 	const chunksArray: string[] = [];
 	text = text.replaceAll('"', "'");
 	text = text.replace(/[\n\t\r]/g, ' ');
 	const splitter = new RecursiveCharacterTextSplitter({
-	  chunkSize: 5_000,
-	  chunkOverlap: 1,
+	  chunkSize: textBatchSize
 	});
 
 	const splitterOutput = await splitter.createDocuments([text]);
 	const textSplits = splitterOutput.map(output => output.pageContent);
-
+	console.log(`Knowledgebase Update: Processing ${textSplits.length} batches of ~${textBatchSize} chars each. Please wait...`);
 	const model = new ChatOpenAI({
 		openAIApiKey: apiKey, 
 		model: 'gpt-4o-mini'
 	});
 
-	const processTextSplits = async (textSplit: string) => {
+	const processTextSplits = async (textSplit: string, currentIndex: number) => {
 		const messages = [];
 		
 		messages.push(new SystemMessage(textToChunksContext))
@@ -141,11 +141,19 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 			if(typeof gptResponse.content !== 'string') throw("GPT Response is not a string");
 			const chunks = extractArrayFromGptChunks(gptResponse.content)
 			chunksArray.push(...chunks);
+			console.log(`Knowledgebase Update: ${currentIndex + 1}/${textSplits.length}  : Pushing ${chunks.length} chunks`);
+			if(textSplits.length === (currentIndex + 1)) {
+				console.log('Knowledgebase Update: Finished!')
+			}
+			await sleep(500)
 		} catch(e) {
 			console.log('Error processing text chunks from input', e)
 		}
 	}
-	await Promise.all(textSplits.map(textSplit => processTextSplits(textSplit)))
+
+	for(let i = 0; i < textSplits.length; i++) {
+		await processTextSplits(textSplits[i], i)
+	}
 
 	return chunksArray;
 }
