@@ -10,10 +10,6 @@ import summarizeWebpageTool from './tools/webpageContent'
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools'
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
-const defaultContext = `
-	- all messages are prefixed with user's name
-`;
-
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
 	- Not be rewritten and kept as is.
