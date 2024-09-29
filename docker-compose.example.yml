@@ -3,7 +3,7 @@ services:
     container_name: pankogpt-prod
     build:
       context: .
-    image: panko-gpt:0.6.0
+    image: panko-gpt:0.6.1
     environment:
       - MONGO_ATLAS_PUBLIC_KEY=
       - MONGO_ATLAS_PRIVATE_KEY=
@@ -28,6 +28,7 @@ services:
       - MONGO_ATLAS_DB_NAME=
       - GLOBAL_OPEN_AI_KEY=
     volumes:
+      - './backend/data:/usr/src/backend/data'
       - './backend/src:/usr/src/backend/src'
       - './frontend/src:/usr/src/frontend/src'
     ports:

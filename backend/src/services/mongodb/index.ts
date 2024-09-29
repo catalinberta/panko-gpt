@@ -6,12 +6,13 @@ import { AtlasSearchIndexDefinition } from '../../api/types'
 import { atlasDefaults } from '../../constants'
 
 export const connectToMongoDB = async (mongoDbUrl: string, dbName: string) => {
+	const connectionTimeout = 30_000;
 	return await mongoose.connect(mongoDbUrl, {
 		dbName,
-		connectTimeoutMS: 0,
-		socketTimeoutMS: 0,
-		maxIdleTimeMS: 0,
-		serverSelectionTimeoutMS: 0
+		connectTimeoutMS: connectionTimeout,
+		socketTimeoutMS: connectionTimeout,
+		maxIdleTimeMS: connectionTimeout,
+		serverSelectionTimeoutMS: connectionTimeout
 	})
 }
 

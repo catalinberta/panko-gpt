@@ -22,3 +22,19 @@
   flex-direction: column;
   min-height    : 100vh;
 }
+
+.animation-button-pulse {
+  animation: button-pulse 1.5s linear infinite;
+}
+
+@keyframes button-pulse {
+  0% {
+    box-shadow : 0 0 0 0 rgba(239, 244, 151, 1);
+    text-shadow: 0 0 0 #fff;
+  }
+
+  40% {
+    box-shadow: 0 0 0 20px rgba(239, 244, 151, 0);
+    color     : rgba(0, 0, 0, 0.75);
+  }
+}
