@@ -88,7 +88,6 @@ export const createWhatsappClient = async (
 		// Init
 		client.initialize();
 		createOnMessageHandler(config, client)
-		console.log(`${botName} is Online!`)
 
 		client.on('qr', async (qr) => {
 			await updateWhatsappConfigById(config._id, {
@@ -97,7 +96,7 @@ export const createWhatsappClient = async (
 			})
 		});
 		client.on('ready', async () => {
-			console.log(`Whatsapp Client ${botName} is ready!`);
+			console.log(`${botName} is Online!`)
 			await updateWhatsappConfigById(config._id, {
 				linked: true,
 				qrcode: ''

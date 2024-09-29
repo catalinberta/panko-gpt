@@ -11,19 +11,24 @@ export const connectToDb = async (mongoDbUrl: string) => {
 	await sleep(attemptDuration)
 	const dbName = process.env.MONGO_ATLAS_DB_NAME || atlasDefaults.databaseName
 	const clusterName =
-		process.env.MONGO_ATLAS_CLUSTER_NAME || atlasDefaults.clusterName
+	process.env.MONGO_ATLAS_CLUSTER_NAME || atlasDefaults.clusterName
 	try {
 		dbCurrentAttempts++
 		if (dbCurrentAttempts <= dbMaxAttempts) {
-			await connectToMongoDB(mongoDbUrl, dbName)
-			await updateSettings({
-				atlasPublicKey: process.env.MONGO_ATLAS_PUBLIC_KEY,
-				atlasPrivateKey: process.env.MONGO_ATLAS_PRIVATE_KEY,
-				atlasProjectId: process.env.MONGO_ATLAS_PROJECT_ID,
-				atlasCluster: clusterName,
-				atlasDatabase: dbName
-			})
-			console.log('Using database:', dbName)
+			try {
+				await connectToMongoDB(mongoDbUrl, dbName)
+				await updateSettings({
+					atlasPublicKey: process.env.MONGO_ATLAS_PUBLIC_KEY,
+					atlasPrivateKey: process.env.MONGO_ATLAS_PRIVATE_KEY,
+					atlasProjectId: process.env.MONGO_ATLAS_PROJECT_ID,
+					atlasCluster: clusterName,
+					atlasDatabase: dbName
+				})
+				console.log('Using database:', dbName)
+			} catch(e) {
+				console.log('Error connecting to MongoDB:',  e);
+				process.exit(1)
+			}
 		} else {
 			console.error(
 				`Could not connect to MongoDB after ${dbMaxAttempts} attempts. Exiting...`

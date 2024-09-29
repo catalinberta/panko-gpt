@@ -147,7 +147,7 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 			}
 			await sleep(500)
 		} catch(e) {
-			console.log('Error processing text chunks from input', e)
+			console.log('Error processing knowledgebase chunks from input', e)
 		}
 	}
 
