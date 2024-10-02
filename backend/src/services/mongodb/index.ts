@@ -12,7 +12,7 @@ export const connectToMongoDB = async (mongoDbUrl: string, dbName: string) => {
 		connectTimeoutMS: connectionTimeout,
 		socketTimeoutMS: connectionTimeout,
 		maxIdleTimeMS: connectionTimeout,
-		serverSelectionTimeoutMS: connectionTimeout
+		serverSelectionTimeoutMS: 0
 	})
 }
 
