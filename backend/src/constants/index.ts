@@ -4,8 +4,8 @@ export const atlasDefaults = {
 	databaseName: 'pankogpt',
 	clusterName: 'pankogpt',
 	indexName: 'pankogpt'
-}
+};
 
 export const chatGptDefaults = {
 	model: 'gpt-4o'
-}
+};

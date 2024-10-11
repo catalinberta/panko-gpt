@@ -1,0 +1,44 @@
+# Dependency directories
+node_modules
+/build
+/dist
+
+# Version control
+.git
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE settings and project files
+.vscode
+.idea
+*.swp
+*.swo
+*.sublime-workspace
+
+# Environment files
+.env
+.env.test
+.env.local
+.env.development
+.env.production
+
+# Compiled files
+*.compiled.js
+*.min.js
+*.bundle.js
+*.js.map
+*.css.map
+
+# Service worker files
+sw.js

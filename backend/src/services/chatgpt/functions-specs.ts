@@ -1,7 +1,7 @@
 export const getCurrentTimeFunctionSpec = {
 	name: 'currenttime',
 	description: 'Get the current time in UTC'
-}
+};
 
 export const getWebPageContentFunctionSpec = {
 	name: 'webpagecontent',
@@ -15,19 +15,18 @@ export const getWebPageContentFunctionSpec = {
 			},
 			userquery: {
 				type: 'string',
-				description:
-					"Rewrite the user's full query considering all precious context"
+				description: "Rewrite the user's full query considering all precious context"
 			}
 		},
 		required: ['url', 'userquery']
 	}
-}
+};
 
 export const getCurrentTimeTool = {
 	function: getCurrentTimeFunctionSpec,
 	type: 'function'
-}
+};
 export const getWebPageContentTool = {
 	function: getWebPageContentFunctionSpec,
 	type: 'function'
-}
+};

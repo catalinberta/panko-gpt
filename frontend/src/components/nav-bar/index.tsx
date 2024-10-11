@@ -1,17 +1,17 @@
-import { Disclosure } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import PankoLogo from '../../assets/logo.png'
-import Router from '../../Router'
-import RoutePaths from '../../constants/RoutePaths'
-import packageJson from '../../../../backend/package.json'
-import { useLocation } from 'react-router-dom'
+import { Disclosure } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import PankoLogo from '../../assets/logo.png';
+import Router from '../../Router';
+import RoutePaths from '../../constants/RoutePaths';
+import packageJson from '../../../../backend/package.json';
+import { useLocation } from 'react-router-dom';
 
 function classNames(...classes: string[]) {
-	return classes.filter(Boolean).join(' ')
+	return classes.filter(Boolean).join(' ');
 }
 
 const NavBar = () => {
-	const location = useLocation()
+	const location = useLocation();
 	const navigation = [
 		{
 			name: 'Dashboard',
@@ -27,7 +27,7 @@ const NavBar = () => {
 			path: RoutePaths.Settings,
 			isActive: location.pathname.startsWith(RoutePaths.Settings)
 		}
-	]
+	];
 	return (
 		<Disclosure as="nav" className="bg-gray-800">
 			{({ open }) => (
@@ -46,12 +46,11 @@ const NavBar = () => {
 								</Disclosure.Button>
 							</div>
 							<div className="flex flex-1 items-center justify-start sm:justify-end sm:items-stretch flex-row-reverse sm:flex-row">
-								<a onClick={() => Router.navigate(RoutePaths.Home)} className="flex flex-col self-center flex-shrink-0 items-center cursor-pointer">
-									<img
-										className="h-9 w-auto rounded-full"
-										src={PankoLogo}
-										alt="Logo"
-									/>
+								<a
+									onClick={() => Router.navigate(RoutePaths.Home)}
+									className="flex flex-col self-center flex-shrink-0 items-center cursor-pointer"
+								>
+									<img className="h-9 w-auto rounded-full" src={PankoLogo} alt="Logo" />
 								</a>
 								<div className="flex items-center flex-1 ml-6 hidden sm:flex">
 									<div className="flex space-x-4">
@@ -105,7 +104,7 @@ const NavBar = () => {
 				</>
 			)}
 		</Disclosure>
-	)
-}
+	);
+};
 
-export default NavBar
+export default NavBar;

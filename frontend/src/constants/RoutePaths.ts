@@ -6,4 +6,4 @@ enum RoutePaths {
 	TelegramBotForm = '/telegram-bot-form',
 	WhatsappBotForm = '/whatsapp-bot-form'
 }
-export default RoutePaths
+export default RoutePaths;

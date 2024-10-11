@@ -28,16 +28,12 @@ const Footer = () => {
 					</div>
 				</div>
 				<div className="text-center text-xs py-4">
-					<a
-						className="text-gray-400 hover:text-white"
-						href="https://catalinberta.com"
-						target="_blank"
-					>
+					<a className="text-gray-400 hover:text-white" href="https://catalinberta.com" target="_blank">
 						developed by Cătălin Berța
 					</a>
 				</div>
 			</div>
 		</footer>
-	)
-}
-export default Footer
+	);
+};
+export default Footer;
