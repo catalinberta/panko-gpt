@@ -1,14 +1,14 @@
-import 'dotenv/config'
-import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils'
-import { chatGptDefaults } from '../../constants'
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
-import { BotConfig } from '../../global'
-import { SystemMessage, AIMessage, HumanMessage, AIMessageChunk } from '@langchain/core/messages'
-import { getPreviousMessages, setPreviousMessage } from '../previous-messages'
-import currentTimeTool from './tools/currentTime'
-import summarizeWebpageTool from './tools/webpageContent'
-import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools'
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import 'dotenv/config';
+import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils';
+import { chatGptDefaults } from '../../constants';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { BotConfig } from '../../global';
+import { SystemMessage, AIMessage, HumanMessage, AIMessageChunk } from '@langchain/core/messages';
+import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
+import currentTimeTool from './tools/currentTime';
+import summarizeWebpageTool from './tools/webpageContent';
+import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -25,46 +25,48 @@ const textToChunksContext = `
 
 export const queryGPT = async (config: BotConfig, userMessage: string, conversationId: string) => {
 	const gptModel = config.chatGptModel || chatGptDefaults.model;
-	
+
 	const model = new ChatOpenAI({
-		openAIApiKey: config.openAiKey, 
+		openAIApiKey: config.openAiKey,
 		model: gptModel
 	});
 
 	const initializedSummarizeWebpageTool = summarizeWebpageTool(config.openAiKey);
-	const toolsByName: {[key: string]: DynamicTool | DynamicStructuredTool<any>} = {
+	const toolsByName: {
+		[key: string]: DynamicTool | DynamicStructuredTool<any>;
+	} = {
 		currentTime: currentTimeTool,
 		summarizeWebpage: initializedSummarizeWebpageTool
-	}
+	};
 
 	const modelWithTools = model.bindTools([currentTimeTool, initializedSummarizeWebpageTool]);
-	
+
 	const messages = [];
 
-	config.context && messages.push(new SystemMessage(config.context))
+	config.context && messages.push(new SystemMessage(config.context));
 
-	if(config.knowledgebase) {
+	if (config.knowledgebase) {
 		const knowledgebase = await getKnowledebaseContext(userMessage, config);
-		knowledgebase && messages.push(knowledgebase)
+		knowledgebase && messages.push(knowledgebase);
 	}
 
-	const previousMessages = getPreviousMessages(conversationId)
-	
-	if(previousMessages) {
+	const previousMessages = getPreviousMessages(conversationId);
+
+	if (previousMessages) {
 		previousMessages.map(previousMessage => {
-			if(previousMessage.role === "user") {
-				messages.push(new HumanMessage(previousMessage.content))
+			if (previousMessage.role === 'user') {
+				messages.push(new HumanMessage(previousMessage.content));
 			}
-			if(previousMessage.role === "assistant") {
-				messages.push(new AIMessage(previousMessage.content))
+			if (previousMessage.role === 'assistant') {
+				messages.push(new AIMessage(previousMessage.content));
 			}
-		})
+		});
 	}
 	messages.push(new HumanMessage(userMessage));
-	
+
 	let aiResponse: AIMessageChunk = await modelWithTools.invoke(messages);
-	
-	if(aiResponse.tool_calls && aiResponse.tool_calls.length) {
+
+	if (aiResponse.tool_calls && aiResponse.tool_calls.length) {
 		messages.push(aiResponse);
 		for (const toolCall of aiResponse.tool_calls) {
 			const selectedTool = toolsByName[toolCall.name];
@@ -73,40 +75,32 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 		}
 		aiResponse = await modelWithTools.invoke(messages);
 	}
-	if(typeof aiResponse.content === 'string') {
-		await setPreviousMessage( 
-			config,
-			conversationId,
-			userMessage,
-			aiResponse.content
-		)
+	if (typeof aiResponse.content === 'string') {
+		await setPreviousMessage(config, conversationId, userMessage, aiResponse.content);
 	}
-	
+
 	return aiResponse.content;
 };
 
-export const getEmbeddingFromString = async (
-	apiKey: string,
-	content: string
-) => {
+export const getEmbeddingFromString = async (apiKey: string, content: string) => {
 	try {
 		const embeddings = new OpenAIEmbeddings({
-			apiKey, 
+			apiKey,
 			model: 'text-embedding-3-large',
 			dimensions: 1536
 		});
 		const embedding = await embeddings.embedDocuments([content]);
 		const tokens = countGptTokens(content);
-	
+
 		return {
 			embedding: embedding[0],
 			tokens
-		}
+		};
 	} catch (error) {
-		console.error('Error generating text embedding:', error)
-		throw error
+		console.error('Error generating text embedding:', error);
+		throw error;
 	}
-}
+};
 
 export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 	const textBatchSize = 8000;
@@ -114,42 +108,46 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 	text = text.replaceAll('"', "'");
 	text = text.replace(/[\n\t\r]/g, ' ');
 	const splitter = new RecursiveCharacterTextSplitter({
-	  chunkSize: textBatchSize
+		chunkSize: textBatchSize
 	});
 
 	const splitterOutput = await splitter.createDocuments([text]);
 	const textSplits = splitterOutput.map(output => output.pageContent);
-	console.log(`Knowledgebase Update: Processing ${textSplits.length} batches of ~${textBatchSize} chars each. Please wait...`);
+	console.log(
+		`Knowledgebase Update: Processing ${textSplits.length} batches of ~${textBatchSize} chars each. Please wait...`
+	);
 	const model = new ChatOpenAI({
-		openAIApiKey: apiKey, 
+		openAIApiKey: apiKey,
 		model: 'gpt-4o-mini'
 	});
 
 	const processTextSplits = async (textSplit: string, currentIndex: number) => {
 		const messages = [];
-		
-		messages.push(new SystemMessage(textToChunksContext))
+
+		messages.push(new SystemMessage(textToChunksContext));
 		messages.push(new HumanMessage('Run the utility on the following text: ' + textSplit));
-		
+
 		const gptResponse = await model.invoke(messages);
 
 		try {
-			if(typeof gptResponse.content !== 'string') throw("GPT Response is not a string");
-			const chunks = extractArrayFromGptChunks(gptResponse.content)
+			if (typeof gptResponse.content !== 'string') throw 'GPT Response is not a string';
+			const chunks = extractArrayFromGptChunks(gptResponse.content);
 			chunksArray.push(...chunks);
-			console.log(`Knowledgebase Update: ${currentIndex + 1}/${textSplits.length}  : Pushing ${chunks.length} chunks`);
-			if(textSplits.length === (currentIndex + 1)) {
-				console.log('Knowledgebase Update: Finished!')
+			console.log(
+				`Knowledgebase Update: ${currentIndex + 1}/${textSplits.length}  : Pushing ${chunks.length} chunks`
+			);
+			if (textSplits.length === currentIndex + 1) {
+				console.log('Knowledgebase Update: Finished!');
 			}
-			await sleep(500)
-		} catch(e) {
-			console.log('Error processing knowledgebase chunks from input', e)
+			await sleep(500);
+		} catch (e) {
+			console.log('Error processing knowledgebase chunks from input', e);
 		}
-	}
+	};
 
-	for(let i = 0; i < textSplits.length; i++) {
-		await processTextSplits(textSplits[i], i)
+	for (let i = 0; i < textSplits.length; i++) {
+		await processTextSplits(textSplits[i], i);
 	}
 
 	return chunksArray;
-}
+};

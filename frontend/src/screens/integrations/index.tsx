@@ -1,23 +1,23 @@
-import { useNavigate, useParams } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
-import apiClient from '../../services/api'
-import { DiscordConfig, TelegramConfig, WhatsappConfig } from '../../services/api/types'
-import ApiPaths from '../../constants/ApiPaths'
-import SideMenu from '../../components/side-menu'
+import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import apiClient from '../../services/api';
+import { DiscordConfig, TelegramConfig, WhatsappConfig } from '../../services/api/types';
+import ApiPaths from '../../constants/ApiPaths';
+import SideMenu from '../../components/side-menu';
 import {
 	ChatBubbleLeftIcon,
 	ChatBubbleOvalLeftIcon,
 	EnvelopeIcon,
 	PaperAirplaneIcon,
 	PhoneIcon
-} from '@heroicons/react/24/outline'
-import RoutePaths from '../../constants/RoutePaths'
+} from '@heroicons/react/24/outline';
+import RoutePaths from '../../constants/RoutePaths';
 
 const Integrations = () => {
-	const params = useParams()
-	const navigate = useNavigate()
-	const [configs, setConfigs] = useState<DiscordConfig[]>([])
-	const integrationName = params.id || 'discord'
+	const params = useParams();
+	const navigate = useNavigate();
+	const [configs, setConfigs] = useState<DiscordConfig[]>([]);
+	const integrationName = params.id || 'discord';
 
 	const formSteps = useMemo(
 		() => [
@@ -58,52 +58,52 @@ const Integrations = () => {
 			}
 		],
 		[integrationName]
-	)
+	);
 
 	useEffect(() => {
 		if (!params.id || params.id === 'discord') {
 			apiClient
 				.get<DiscordConfig[]>(ApiPaths.DiscordConfigs)
 				.then(response => {
-					setConfigs(response.data)
+					setConfigs(response.data);
 				})
 				.catch(error => {
-					console.error('Error:', error)
-				})
-			return
+					console.error('Error:', error);
+				});
+			return;
 		}
 
 		if (params.id === 'discord') {
 			apiClient
 				.get<DiscordConfig[]>(ApiPaths.DiscordConfigs)
 				.then(response => {
-					setConfigs(response.data)
+					setConfigs(response.data);
 				})
 				.catch(error => {
-					console.error('Error:', error)
-				})
+					console.error('Error:', error);
+				});
 		}
 		if (params.id === 'telegram') {
 			apiClient
 				.get<TelegramConfig[]>(ApiPaths.TelegramConfigs)
 				.then(response => {
-					setConfigs(response.data)
+					setConfigs(response.data);
 				})
 				.catch(error => {
-					console.error('Error:', error)
-				})
+					console.error('Error:', error);
+				});
 		}
 		if (params.id === 'whatsapp') {
 			apiClient
 				.get<WhatsappConfig[]>(ApiPaths.WhatsappConfigs)
 				.then(response => {
-					setConfigs(response.data)
+					setConfigs(response.data);
 				})
 				.catch(error => {
-					console.error('Error:', error)
-				})
+					console.error('Error:', error);
+				});
 		}
-	}, [params.id])
+	}, [params.id]);
 
 	return typeof configs !== 'object' ? (
 		<></>
@@ -129,10 +129,7 @@ const Integrations = () => {
 					</thead>
 					<tbody>
 						{configs.map((config, index) => (
-							<tr
-								key={index}
-								className="border-b bg-gray-800 border-gray-700 hover:bg-gray-600"
-							>
+							<tr key={index} className="border-b bg-gray-800 border-gray-700 hover:bg-gray-600">
 								<td className="px-4 py-4">
 									<span className="sr-only">Status</span>
 									{config.enabled ? (
@@ -141,10 +138,7 @@ const Integrations = () => {
 										<div className="w-4 h-4 text-xs font-bold  bg-red-500 border-2 rounded-full border-red-900"></div>
 									)}
 								</td>
-								<th
-									scope="row"
-									className="px-1 py-4 font-medium whitespace-nowrap text-white"
-								>
+								<th scope="row" className="px-1 py-4 font-medium whitespace-nowrap text-white">
 									{config.internalName || config.botName}
 								</th>
 								<td className="px-6 py-4">{config._id}</td>
@@ -153,11 +147,9 @@ const Integrations = () => {
 										type="button"
 										onClick={() => {
 											if (!params.id || params.id === 'discord')
-												navigate(`/discord-bot-form/${config._id}`)
-											params.id === 'telegram' &&
-												navigate(`/telegram-bot-form/${config._id}`)
-											params.id === 'whatsapp' &&
-												navigate(`/whatsapp-bot-form/${config._id}`)
+												navigate(`/discord-bot-form/${config._id}`);
+											params.id === 'telegram' && navigate(`/telegram-bot-form/${config._id}`);
+											params.id === 'whatsapp' && navigate(`/whatsapp-bot-form/${config._id}`);
 										}}
 										className="text-gray-900 bg-gradient-to-r bg-yellow-300 hover:bg-yellow-200 focus:ring-4 focus:outline-none focus:ring-transparent shadow-lg rounded-md px-3 py-1 text-center"
 									>
@@ -179,10 +171,10 @@ const Integrations = () => {
 					type="button"
 					onClick={() => {
 						if (!params.id || params.id === 'discord') {
-							navigate('/discord-bot-form')
+							navigate('/discord-bot-form');
 						}
-						params.id === 'telegram' && navigate('/telegram-bot-form')
-						params.id === 'whatsapp' && navigate('/whatsapp-bot-form')
+						params.id === 'telegram' && navigate('/telegram-bot-form');
+						params.id === 'whatsapp' && navigate('/whatsapp-bot-form');
 					}}
 					className="mt-10 text-gray-900 self-center bg-gradient-to-r bg-yellow-300 hover:bg-yellow-200 focus:ring-4 focus:outline-none focus:ring-transparent shadow-lg rounded-md px-3 py-1 text-center"
 				>
@@ -192,7 +184,7 @@ const Integrations = () => {
 				</button>
 			</div>
 		</div>
-	)
-}
+	);
+};
 
-export default Integrations
+export default Integrations;

@@ -1,36 +1,36 @@
 services:
-  production:
-    container_name: pankogpt-prod
-    build:
-      context: .
-    image: panko-gpt:0.6.2
-    environment:
-      - MONGO_ATLAS_PUBLIC_KEY=
-      - MONGO_ATLAS_PRIVATE_KEY=
-      - MONGO_ATLAS_PROJECT_ID=
-      - MONGO_ATLAS_CLUSTER_NAME=
-      - MONGO_DB_NAME=
-      - GLOBAL_OPEN_AI_KEY=
-    ports:
-      - '5002:5002'
-  development:
-    container_name: pankogpt-dev
-    build:
-      context: .
-    image: panko-gpt-dev
-    environment:
-      - NODE_ENV=development
-      - API_URL=http://localhost:5002
-      - MONGO_ATLAS_PUBLIC_KEY=
-      - MONGO_ATLAS_PRIVATE_KEY=
-      - MONGO_ATLAS_PROJECT_ID=
-      - MONGO_ATLAS_CLUSTER_NAME=
-      - MONGO_ATLAS_DB_NAME=
-      - GLOBAL_OPEN_AI_KEY=
-    volumes:
-      - './backend/data:/usr/src/backend/data'
-      - './backend/src:/usr/src/backend/src'
-      - './frontend/src:/usr/src/frontend/src'
-    ports:
-      - '5002:5002'
-      - '5003:5003'
+    production:
+        container_name: pankogpt-prod
+        build:
+            context: .
+        image: panko-gpt:0.6.3
+        environment:
+            - MONGO_ATLAS_PUBLIC_KEY=
+            - MONGO_ATLAS_PRIVATE_KEY=
+            - MONGO_ATLAS_PROJECT_ID=
+            - MONGO_ATLAS_CLUSTER_NAME=
+            - MONGO_DB_NAME=
+            - GLOBAL_OPEN_AI_KEY=
+        ports:
+            - '5002:5002'
+    development:
+        container_name: pankogpt-dev
+        build:
+            context: .
+        image: panko-gpt-dev
+        environment:
+            - NODE_ENV=development
+            - API_URL=http://localhost:5002
+            - MONGO_ATLAS_PUBLIC_KEY=
+            - MONGO_ATLAS_PRIVATE_KEY=
+            - MONGO_ATLAS_PROJECT_ID=
+            - MONGO_ATLAS_CLUSTER_NAME=
+            - MONGO_ATLAS_DB_NAME=
+            - GLOBAL_OPEN_AI_KEY=
+        volumes:
+            - './backend/data:/usr/src/backend/data'
+            - './backend/src:/usr/src/backend/src'
+            - './frontend/src:/usr/src/frontend/src'
+        ports:
+            - '5002:5002'
+            - '5003:5003'

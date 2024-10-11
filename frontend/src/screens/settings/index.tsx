@@ -1,31 +1,28 @@
-import { Cog6ToothIcon, CogIcon } from '@heroicons/react/24/outline'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import RoutePaths from '../../constants/RoutePaths'
-import SideMenu from '../../components/side-menu'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { SubmitHandler, useForm } from 'react-hook-form'
-import { useParams } from 'react-router-dom'
-import ApiPaths from '../../constants/ApiPaths'
-import apiClient from '../../services/api'
-import {
-	AtlasSearchIndexDefinition,
-	Settings as SettingsType
-} from '../../services/api/types'
-import Dropdown from '@components/dropdown'
-import { chatgptDefaults } from '@constants/chatgpt'
+import { Cog6ToothIcon, CogIcon } from '@heroicons/react/24/outline';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import RoutePaths from '../../constants/RoutePaths';
+import SideMenu from '../../components/side-menu';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+import ApiPaths from '../../constants/ApiPaths';
+import apiClient from '../../services/api';
+import { AtlasSearchIndexDefinition, Settings as SettingsType } from '../../services/api/types';
+import Dropdown from '@components/dropdown';
+import { chatgptDefaults } from '@constants/chatgpt';
 
 const schema = z.object({
 	openAiKey: z.string().optional(),
-	chatGptModel: z.string().min(1, "This field is required"),
+	chatGptModel: z.string().min(1, 'This field is required'),
 	customChatGptModel: z.boolean(),
 	atlasPublicKey: z.string(),
 	atlasPrivateKey: z.string(),
 	atlasProjectId: z.string(),
-	atlasCluster: z.string(),
-})
+	atlasCluster: z.string()
+});
 
-type FormFields = z.infer<typeof schema>
+type FormFields = z.infer<typeof schema>;
 
 const defaultValues = {
 	atlasPublicKey: '',
@@ -36,15 +33,13 @@ const defaultValues = {
 	openAiKey: '',
 	chatGptModel: chatgptDefaults.model,
 	customChatGptModel: false
-}
+};
 
 const Settings: React.FC = () => {
-	const [settings, setSettings] = useState<SettingsType>(defaultValues)
+	const [settings, setSettings] = useState<SettingsType>(defaultValues);
 	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
-	const [pankoIndex, setPankoIndex] = useState<
-		AtlasSearchIndexDefinition | false | null
-	>(null)
-	const [indexLoadingStatus, setIndexLoadingStatus] = useState(false)
+	const [pankoIndex, setPankoIndex] = useState<AtlasSearchIndexDefinition | false | null>(null);
+	const [indexLoadingStatus, setIndexLoadingStatus] = useState(false);
 	const {
 		register,
 		reset,
@@ -55,10 +50,10 @@ const Settings: React.FC = () => {
 	} = useForm<FormFields>({
 		defaultValues,
 		resolver: zodResolver(schema)
-	})
-	const params = useParams()
-	const settingsCategoryParam = params.category || 'gpt'
-	const { openAiKey, customChatGptModel } = watch()
+	});
+	const params = useParams();
+	const settingsCategoryParam = params.category || 'gpt';
+	const { openAiKey, customChatGptModel } = watch();
 	const formSteps = useMemo(
 		() => [
 			{
@@ -77,83 +72,79 @@ const Settings: React.FC = () => {
 			}
 		],
 		[settingsCategoryParam]
-	)
+	);
 
 	const getIndex = useCallback(() => {
 		apiClient
 			.get<AtlasSearchIndexDefinition | false>(`${ApiPaths.AtlasIndex}`)
 			.then(response => {
-				setPankoIndex(response.data)
+				setPankoIndex(response.data);
 				if (response.data && response.data.status === 'IN_PROGRESS') {
 					setTimeout(() => {
-						getIndex()
-					}, 5000)
+						getIndex();
+					}, 5000);
 				}
 			})
 			.catch(error => {
-				setPankoIndex(false)
-				console.error('Error:', error)
-			})
-	}, [])
+				setPankoIndex(false);
+				console.error('Error:', error);
+			});
+	}, []);
 
 	const createIndex = async () => {
-		setIndexLoadingStatus(true)
+		setIndexLoadingStatus(true);
 		await apiClient
 			.post<AtlasSearchIndexDefinition>(`${ApiPaths.AtlasIndex}`)
 			.then(() => {
-				getIndex()
+				getIndex();
 			})
 			.catch(error => {
-				console.error('Error creating index', error)
-			})
-		setIndexLoadingStatus(false)
-	}
+				console.error('Error creating index', error);
+			});
+		setIndexLoadingStatus(false);
+	};
 
 	const getSettings = React.useCallback(async () => {
-		const response = await apiClient.get<SettingsType>(`${ApiPaths.Settings}`)
-		setSettings(response.data)
-		reset(response.data)
-	}, [reset])
+		const response = await apiClient.get<SettingsType>(`${ApiPaths.Settings}`);
+		setSettings(response.data);
+		reset(response.data);
+	}, [reset]);
 
 	useEffect(() => {
 		getAllChatgptModels();
-	}, [openAiKey])
+	}, [openAiKey]);
 
 	useEffect(() => {
-		getSettings()
-	}, [getSettings])
+		getSettings();
+	}, [getSettings]);
 
 	useEffect(() => {
-		if (settingsCategoryParam !== 'vector-search') return
-		if (
-			!settings.atlasPrivateKey ||
-			!settings.atlasPublicKey ||
-			!settings.atlasProjectId
-		) {
-			return
+		if (settingsCategoryParam !== 'vector-search') return;
+		if (!settings.atlasPrivateKey || !settings.atlasPublicKey || !settings.atlasProjectId) {
+			return;
 		}
-		getIndex()
-	}, [settingsCategoryParam, getIndex, settings])
+		getIndex();
+	}, [settingsCategoryParam, getIndex, settings]);
 
 	const getAllChatgptModels = () => {
 		apiClient
 			.get<string[]>(`${ApiPaths.ChatgptModels}`)
-			.then((response) => {
+			.then(response => {
 				const models = response.data;
-				models.unshift("");
+				models.unshift('');
 				setChatgptModels(models);
 			})
 			.catch(error => {
-				console.error('Error fetching chatgpt models', error)
-			})
-	}
+				console.error('Error fetching chatgpt models', error);
+			});
+	};
 
 	const onSubmit: SubmitHandler<FormFields> = async data => {
-		await apiClient.post<SettingsType>(ApiPaths.Settings, data)
-		await getSettings()
+		await apiClient.post<SettingsType>(ApiPaths.Settings, data);
+		await getSettings();
 		getAllChatgptModels();
-	}
-	
+	};
+
 	return (
 		<div className="flex flex-row flex-wrap py-4">
 			<SideMenu steps={formSteps} />
@@ -190,16 +181,21 @@ const Settings: React.FC = () => {
 												)}
 											</div>
 										</div>
-										{!customChatGptModel && <Dropdown 
-											name="chatGptModel" 
-											label='Global ChatGPT Model' 
-											control={control} 
-											error={errors.chatGptModel}
-											register={register} 
-											options={chatgptModels.map(model => ({label: model, value: model}))} 
-											hint="Hint: Specify the Global OpenAI Key at the top to automatically fetch all ChatGPT models for this dropdown" 
-										/>}
-										{customChatGptModel && 
+										{!customChatGptModel && (
+											<Dropdown
+												name="chatGptModel"
+												label="Global ChatGPT Model"
+												control={control}
+												error={errors.chatGptModel}
+												register={register}
+												options={chatgptModels.map(model => ({
+													label: model,
+													value: model
+												}))}
+												hint="Hint: Specify the Global OpenAI Key at the top to automatically fetch all ChatGPT models for this dropdown"
+											/>
+										)}
+										{customChatGptModel && (
 											<div className="col-span-full">
 												<label
 													htmlFor="street-address"
@@ -219,10 +215,10 @@ const Settings: React.FC = () => {
 													<div className="mt-1 text-red-500 text-xs">
 														{errors.chatGptModel.message}
 													</div>
-												)}	
+												)}
 											</div>
-										}
-									
+										)}
+
 										<div className="col-span-full -mt-5 flex items-center mb-4">
 											<input
 												className="w-4 h-4 text-blue-600  rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
@@ -237,7 +233,6 @@ const Settings: React.FC = () => {
 												Manually specify Global ChatGPT model
 											</label>
 										</div>
-
 									</>
 								)}
 								{settingsCategoryParam === 'vector-search' && (
@@ -256,9 +251,7 @@ const Settings: React.FC = () => {
 												<div className="mt-3 flex flex-1 self-stretch bg-gray-900 justify-between py-4 pl-4 pr-5 text-sm leading-6">
 													<div className="flex w-0 flex-1 items-center">
 														<div className="ml-4 flex min-w-0 flex-1 gap-2">
-															<span className="truncate text-gray-400">
-																Search Index
-															</span>
+															<span className="truncate text-gray-400">Search Index</span>
 															<span className="flex-shrink-0 font-bold text-white">
 																pankogpt
 															</span>
@@ -291,8 +284,8 @@ const Settings: React.FC = () => {
 														</div>
 														<div className="col-span-full text-center">
 															<span className="mt-1 inline-flex items-center rounded-md bg-green-50 px-10 py-2 text-xs font-bold text-green-800 ring-1 ring-inset ring-green-600/20">
-																You can now go to each bot configuration and add
-																your knowledge base in the Vector Search section
+																You can now go to each bot configuration and add your
+																knowledge base in the Vector Search section
 															</span>
 														</div>
 													</>
@@ -307,8 +300,7 @@ const Settings: React.FC = () => {
 												{pankoIndex && pankoIndex.status === 'IN_PROGRESS' && (
 													<div className="col-span-full text-center">
 														<span className="mt-5 inline-flex items-center rounded-md font-bold bg-blue-50 px-10 py-2 text-xs text-blue-700 ring-1 ring-inset ring-blue-600/20">
-															The index is being created! Come back in a few
-															minutes.
+															The index is being created! Come back in a few minutes.
 														</span>
 													</div>
 												)}
@@ -318,9 +310,7 @@ const Settings: React.FC = () => {
 															type="button"
 															disabled={indexLoadingStatus}
 															className="rounded-md bg-green-300 disabled:bg-gray-200 px-10 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-															onClick={handleSubmit(
-																async () => await createIndex()
-															)}
+															onClick={handleSubmit(async () => await createIndex())}
 														>
 															Create Search Index
 														</button>
@@ -347,7 +337,7 @@ const Settings: React.FC = () => {
 				</div>
 			</main>
 		</div>
-	)
-}
+	);
+};
 
-export default Settings
+export default Settings;

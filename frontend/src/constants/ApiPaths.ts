@@ -13,4 +13,4 @@ enum ApiPaths {
 	Chunks = '/api/chunks',
 	ChatgptModels = '/api/chatgpt-models'
 }
-export default ApiPaths
+export default ApiPaths;

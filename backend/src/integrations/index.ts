@@ -1,11 +1,11 @@
-import discord from './discord'
-import telegram from './telegram'
-import whatsapp from './whatsapp'
+import discord from './discord';
+import telegram from './telegram';
+import whatsapp from './whatsapp';
 
 const integrations = () => {
-	discord()
-	telegram()
+	discord();
+	telegram();
 	whatsapp();
-}
+};
 
-export default integrations
+export default integrations;

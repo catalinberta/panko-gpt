@@ -1,17 +1,12 @@
-import DiscordBotForm from '@screens/bot-form-discord'
-import Integrations from '@screens/integrations'
-import {
-	createBrowserRouter,
-	createRoutesFromElements,
-	Outlet,
-	Route
-} from 'react-router-dom'
-import TelegramBotForm from '@screens/bot-form-telegram'
-import Breadcrumbs from './components'
-import Footer from '@components/footer'
-import NavBar from '@components/nav-bar'
-import Settings from '@screens/settings'
-import WhatsappBotForm from '@screens/bot-form-whatsapp'
+import DiscordBotForm from '@screens/bot-form-discord';
+import Integrations from '@screens/integrations';
+import { createBrowserRouter, createRoutesFromElements, Outlet, Route } from 'react-router-dom';
+import TelegramBotForm from '@screens/bot-form-telegram';
+import Breadcrumbs from './components';
+import Footer from '@components/footer';
+import NavBar from '@components/nav-bar';
+import Settings from '@screens/settings';
+import WhatsappBotForm from '@screens/bot-form-whatsapp';
 
 const RootLayout = () => {
 	return (
@@ -23,8 +18,8 @@ const RootLayout = () => {
 			</div>
 			<Footer />
 		</>
-	)
-}
+	);
+};
 
 export const Router = createBrowserRouter(
 	createRoutesFromElements(
@@ -32,23 +27,11 @@ export const Router = createBrowserRouter(
 			<Route index element={<Integrations />} />
 			<Route index path="/settings/:category?" element={<Settings />} />
 			<Route index path="/integrations/:id?" element={<Integrations />} />
-			<Route
-				index
-				path="/discord-bot-form/:id?/:form-step?"
-				element={<DiscordBotForm />}
-			/>
-			<Route
-				index
-				path="/telegram-bot-form/:id?/:form-step?"
-				element={<TelegramBotForm />}
-			/>
-			<Route
-				index
-				path="/whatsapp-bot-form/:id?/:form-step?"
-				element={<WhatsappBotForm />}
-			/>
+			<Route index path="/discord-bot-form/:id?/:form-step?" element={<DiscordBotForm />} />
+			<Route index path="/telegram-bot-form/:id?/:form-step?" element={<TelegramBotForm />} />
+			<Route index path="/whatsapp-bot-form/:id?/:form-step?" element={<WhatsappBotForm />} />
 		</Route>
 	)
-)
+);
 
-export default Router
+export default Router;
