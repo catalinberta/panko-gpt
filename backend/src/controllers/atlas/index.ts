@@ -20,13 +20,20 @@ export const getAtlasIndexController = async (req: Request, res: Response) => {
 	const indexes: AtlasSearchIndexDefinition[] = await atlasApiClient.atlasSearch.getAll(
 		settings?.atlasCluster,
 		settings?.atlasDatabase,
-		'vectordatas'
+		atlasDefaults.vectorsCollectionName,
+		{
+			//@ts-ignore
+			httpOptions: {
+				timeout: 30_000
+			}
+		}
 	);
 	indexes.forEach(index => {
 		if (index.name === atlasDefaults.indexName) {
 			pankoIndex = index;
 		}
 	});
+	updateSettings({ hasVectorDataSearchIndex: true });
 	res.json(pankoIndex);
 };
 
@@ -48,7 +55,7 @@ export const createAtlasIndexController = async (req: Request, res: Response) =>
 	}
 	const indexBody = {
 		name: atlasDefaults.indexName,
-		collectionName: 'vectordatas',
+		collectionName: atlasDefaults.vectorsCollectionName,
 		database: settings?.atlasDatabase,
 		mappings: {
 			dynamic: true,
