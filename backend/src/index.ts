@@ -53,13 +53,18 @@ server.listen(serverPort, () => {
 	console.log(`API running on http://localhost:${serverPort}`);
 });
 (async () => {
-	const mongoDbUrl = await atlasConfigurator();
-	if (!mongoDbUrl) {
-		console.error('Could not get MongoDB URL');
-		return;
+	try {
+		const mongoDbUrl = await atlasConfigurator();
+		if (!mongoDbUrl) {
+			console.error('Could not get MongoDB URL');
+			return;
+		}
+		console.log('Connecting to MongoDB URL', hideCredentialsFromMongoDbUrl(mongoDbUrl));
+		await connectToDb(mongoDbUrl);
+	} catch (e) {
+		console.error(`Failed to connect to MongoDB Atlas. ${e}`);
+		process.exit(1);
 	}
-	console.log('Connecting to MongoDB URL', hideCredentialsFromMongoDbUrl(mongoDbUrl));
-	await connectToDb(mongoDbUrl);
 	integrations();
 	await configureIndex();
 })();

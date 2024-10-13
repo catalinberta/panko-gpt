@@ -3,9 +3,10 @@ import atlasClient, { AtlasClient } from 'mongodb-atlas-api-client';
 import { atlasDefaults } from '../../constants';
 import { createAtlasSearchIndex, getAtlasSearchIndex } from '.';
 import { updateSettings } from '../../models/Settings';
+import mongoose from 'mongoose';
 
 const atlasConfigurator = async (): Promise<string | undefined> => {
-	console.log('Init Atlas Configurator');
+	console.log('Init MongoDB Atlas Configurator');
 	const client = atlasClient({
 		publicKey: process.env.MONGO_ATLAS_PUBLIC_KEY!,
 		privateKey: process.env.MONGO_ATLAS_PRIVATE_KEY!,
@@ -20,10 +21,10 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 	}
 	let pankoUsername = usersResponse.results.find(result => result.username === atlasDefaults.username);
 	if (!pankoUsername) {
-		console.error('Atlas Index: No username found. Creating...');
+		console.error('MongoDB: No username found. Creating...');
 
 		const username = await createUsername(client);
-		console.log('Atlas Index: Created username:', username);
+		console.log('MongoDB: Created username:', username);
 	} else {
 		updateUsername(client);
 	}
@@ -32,7 +33,7 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 		console.error(`Could not get ${atlasDefaults.username} username data`, usernameResponse.error);
 		return;
 	}
-	console.log('Username found:', usernameResponse.username);
+	console.log('MongoDB: Username found:', usernameResponse.username);
 	const customClusterName = process.env.MONGO_ATLAS_CLUSTER_NAME;
 	const clustersResponse = await client.cluster.getAll();
 	let cluster;
@@ -49,18 +50,20 @@ const atlasConfigurator = async (): Promise<string | undefined> => {
 			);
 			return;
 		}
-		console.log('Atlas Index: Using specified cluster:', customClusterName);
+		console.log('MongoDB: Using specified cluster:', customClusterName);
 	} else {
 		if (clusters.length) {
 			cluster = clusters[0];
-			console.log('Atlas Index: Using first available cluster:', cluster.name);
+			console.log('MongoDB: Using first available cluster:', cluster.name);
 		} else {
 			console.error('No clusters found. Please create a cluster in the Atlas account first.');
 			return;
 		}
 	}
 	const clusterUrl = cluster.srvAddress.replace('mongodb+srv://', '');
-	return `mongodb+srv://${usernameResponse.username}:${process.env.MONGO_ATLAS_PRIVATE_KEY}@${clusterUrl}/?retryWrites=true&w=majority&appName=${cluster.name}`;
+	const mongoDbUrl = `mongodb+srv://${usernameResponse.username}:${process.env.MONGO_ATLAS_PRIVATE_KEY}@${clusterUrl}/?retryWrites=true&w=majority&appName=${cluster.name}`;
+	await attemptDbConnection(mongoDbUrl, usernameResponse.username);
+	return mongoDbUrl;
 };
 
 const getUsername = async (client: AtlasClient) => {
@@ -88,11 +91,48 @@ const updateUsername = async (client: AtlasClient) => {
 	});
 };
 
+const attemptDbConnection = async (mongoDbUrl: string, username: string) => {
+	return new Promise((resolve, reject) => {
+		const dbName = process.env.MONGO_ATLAS_DB_NAME || atlasDefaults.databaseName;
+		async function connectWithRetry(url: string, maxAttempts = 10) {
+			let attempt = 0;
+			const connect = async () => {
+				attempt++;
+				const retryTimeout = Math.min(30, Math.pow(2, attempt));
+				try {
+					console.log(`MongoDB: Attempt ${attempt}/${maxAttempts} to connect using username: ${username}`);
+					await mongoose.connect(url, {
+						dbName,
+						connectTimeoutMS: 30_000,
+						socketTimeoutMS: 30_000,
+						maxIdleTimeMS: 30_000,
+						serverSelectionTimeoutMS: 0
+					});
+					console.log(`MongoDB: Successfully connected using username: ${username}`);
+					resolve(true);
+				} catch (error) {
+					if (attempt < maxAttempts) {
+						console.log(
+							`Attempt ${attempt}/${maxAttempts} failed with username ${username}. Reason of failure: ${error}`
+						);
+						console.log(`MongoDB: Retrying in ${retryTimeout} seconds...`);
+						setTimeout(connect, retryTimeout * 1000);
+					} else {
+						reject(`All attempts to connect to db using username ${username} failed. Reason: ${error}`);
+					}
+				}
+			};
+			connect();
+		}
+		connectWithRetry(mongoDbUrl);
+	});
+};
+
 export const configureIndex = async () => {
 	let index = await getAtlasSearchIndex();
 
 	if (!index) {
-		console.log('Atlas Index: No index found, creating one...');
+		console.log('MongoDB: No index found, creating one...');
 		index = await createAtlasSearchIndex();
 	}
 	if ('error' in index) {
@@ -101,7 +141,7 @@ export const configureIndex = async () => {
 		return;
 	} else if (index) {
 		updateSettings({ hasVectorDataSearchIndex: true });
-		console.log('Atlas Index: Using index:', index.name);
+		console.log('MongoDB: Using index:', index.name);
 	} else {
 		updateSettings({ hasVectorDataSearchIndex: false });
 	}

@@ -3,7 +3,8 @@ export const atlasDefaults = {
 	roleName: 'pankogpt',
 	databaseName: 'pankogpt',
 	clusterName: 'pankogpt',
-	indexName: 'pankogpt'
+	indexName: 'pankogpt',
+	vectorsCollectionName: 'vectordatas'
 };
 
 export const chatGptDefaults = {

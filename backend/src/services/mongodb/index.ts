@@ -38,14 +38,24 @@ export const getAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefinition 
 		console.log('Error getting atlas client');
 		return pankoIndex;
 	}
-	if (!settings?.atlasCluster || !settings?.atlasDatabase) {
-		console.log('No cluster or database name specified');
+	if (!settings?.atlasCluster) {
+		console.log('Cluster name not specified');
+		return pankoIndex;
+	}
+	if (!settings?.atlasDatabase) {
+		console.log('Database name not specified');
 		return pankoIndex;
 	}
 	const indexes: AtlasSearchIndexDefinition[] | AtlasError = await atlasApiClient.atlasSearch.getAll(
 		settings?.atlasCluster,
 		settings?.atlasDatabase,
-		'vectordatas'
+		atlasDefaults.vectorsCollectionName,
+		{
+			//@ts-ignore
+			httpOptions: {
+				timeout: 30_000
+			}
+		}
 	);
 	if ('error' in indexes) {
 		console.error(
@@ -74,7 +84,7 @@ export const createAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefiniti
 	}
 	const indexBody = {
 		name: atlasDefaults.indexName,
-		collectionName: 'vectordatas',
+		collectionName: atlasDefaults.vectorsCollectionName,
 		database: settings?.atlasDatabase,
 		mappings: {
 			dynamic: true,
