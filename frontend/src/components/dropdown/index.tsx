@@ -26,7 +26,7 @@ function Dropdown<T extends FieldValues>(props: DropdownProps<T>) {
 			</label>
 			<select
 				id="projectId"
-				className="bg-gray-300 border mt-2 border-gray-300 text-gray-900 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-[0.45rem]"
+				className="bg-gray-300 border mt-2 border-gray-300 text-gray-900 text-sm rounded-md focus:ring-yellow-300 focus:border-yellow-300 block w-full p-[0.45rem]"
 				{...props.register(props.name)}
 				value={field.value}
 			>

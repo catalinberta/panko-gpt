@@ -99,14 +99,9 @@ const TelegramBotForm: React.FC = () => {
 				isActive: formStepParam === 'vector-search',
 				disabled: botId === 'new' ? 'First create the bot to enable this section' : false,
 				tooltip: (
-					<div
-						id="vector-search-tooltip"
-						role="tooltip"
-						className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-700 rounded-lg shadow-sm opacity-0 tooltip "
-					>
-						Tooltip content
-						<div className="tooltip-arrow" data-popper-arrow></div>
-					</div>
+					<span className="tooltip -left-10 px-4 py-2 text-sm rounded shadow-lg p-1 gray-100 bg-black -mt-7">
+						To enable this section, first create the bot.
+					</span>
 				)
 			},
 			{
