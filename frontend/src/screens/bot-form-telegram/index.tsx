@@ -136,7 +136,10 @@ const TelegramBotForm: React.FC = () => {
 			apiClient
 				.get<TelegramConfig>(`${ApiPaths.TelegramConfigs}/${botId}`)
 				.then(response => {
-					reset(response.data);
+					reset({
+						...defaultValues,
+						...response.data
+					});
 				})
 				.catch(error => {
 					console.error('Error:', error);

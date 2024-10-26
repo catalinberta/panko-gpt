@@ -168,7 +168,10 @@ const DiscordBotForm: React.FC = () => {
 			apiClient
 				.get<DiscordConfig>(`${ApiPaths.DiscordConfigs}/${botId}`)
 				.then(response => {
-					reset(response.data);
+					reset({
+						...formDefaultValues,
+						...response.data
+					});
 					response.data.clientId && setClientId(response.data.clientId);
 				})
 				.catch(error => {

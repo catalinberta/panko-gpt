@@ -38,6 +38,9 @@ export interface WhatsappConfig {
 	enabled: boolean;
 	context: string;
 	onlyContacts: boolean;
+	contactsFilterType: string;
+	contactsWhitelist: string[];
+	contactsBlacklist: string[];
 	internalName?: string;
 	botStatusText?: string;
 	detectLanguages?: string[];

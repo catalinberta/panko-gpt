@@ -14,22 +14,10 @@ import CurrentTime from '@components/_functions/currenttime';
 import LinkModal from './LinkModal';
 import Dropdown from '@components/dropdown';
 import KnowledgebaseModal from '@components/_modals/KnowledgebaseModal';
+import DismissibleChips from '@components/dismissible-chips';
+import formSchema from './form-schema';
 
-const schema = z.object({
-	enabled: z.boolean(),
-	internalName: z.string(),
-	openAiKey: z.string().min(1, 'This field is required'),
-	chatGptModel: z.string().min(1, 'This field is required'),
-	customChatGptModel: z.boolean(),
-	linked: z.boolean().default(false),
-	context: z.string().min(1, 'This field is required'),
-	knowledgebase: z.string(),
-	onlyContacts: z.boolean(),
-	functionInternet: z.boolean(),
-	functionTime: z.boolean()
-});
-
-type FormFields = z.infer<typeof schema>;
+type FormFields = z.infer<typeof formSchema>;
 
 const defaultValues = {
 	enabled: true,
@@ -42,6 +30,9 @@ const defaultValues = {
 	context: '',
 	knowledgebase: '',
 	onlyContacts: false,
+	contactsFilterType: 'all',
+	contactsWhitelist: [],
+	contactsBlacklist: [],
 	functionInternet: true,
 	functionTime: true
 };
@@ -76,10 +67,10 @@ const WhatsappBotForm: React.FC = () => {
 		handleSubmit
 	} = useForm<FormFields>({
 		defaultValues,
-		resolver: zodResolver(schema)
+		resolver: zodResolver(formSchema)
 	});
 
-	const { openAiKey, enabled, chatGptModel, customChatGptModel } = watch();
+	const { openAiKey, enabled, chatGptModel, customChatGptModel, onlyContacts, contactsFilterType } = watch();
 
 	const params = useParams();
 
@@ -141,7 +132,10 @@ const WhatsappBotForm: React.FC = () => {
 			apiClient
 				.get<WhatsappConfig>(`${ApiPaths.WhatsappConfigs}/${botId}`)
 				.then(response => {
-					reset(response.data);
+					reset({
+						...defaultValues,
+						...response.data
+					});
 					setBotConfig(response.data);
 				})
 				.catch(error => {
@@ -245,7 +239,7 @@ const WhatsappBotForm: React.FC = () => {
 				<h1 className="text-2xl text-yellow-500" id="home">
 					Configuration
 				</h1>
-				<form className="pb-10 flex flex-1 flex-col" onSubmit={handleSubmit(onCreate)}>
+				<form className="pb-10 flex flex-1 flex-col">
 					{formStep?.value === 'general' && (
 						<div className="flex-1">
 							<label className="inline-flex items-center mt-10 cursor-pointer">
@@ -419,12 +413,62 @@ const WhatsappBotForm: React.FC = () => {
 										className={`relative w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-white rounded-full peer bg-gray-600 peer-checked:bg-yellow-300 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-gray-600`}
 									></div>
 									<span className="ms-3 text-sm font-medium text-gray-300">
-										Respond only to contacts
+										Respond only to selected contacts
 									</span>
 								</label>
 								<p className="mt-1 text-sm leading-6 text-gray-400">
-									Whether to respond to anyone or only to contacts on the linked device.
+									Whether to respond to all unknown numbers or only to selected contacts from the
+									linked device.
 								</p>
+								{onlyContacts && (
+									<>
+										<div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+											<Dropdown
+												name="contactsFilterType"
+												label="Select contacts filter"
+												control={control}
+												error={errors.contactsFilterType}
+												register={register}
+												options={[
+													{
+														label: 'All contacts',
+														value: 'all'
+													},
+													{
+														label: 'Whitelist',
+														value: 'whitelist'
+													},
+													{
+														label: 'Blacklist',
+														value: 'blacklist'
+													}
+												]}
+											/>
+										</div>
+										{contactsFilterType === 'whitelist' && (
+											<div className="mt-5">
+												<DismissibleChips
+													name="contactsWhitelist"
+													label="Whitelist"
+													placeholder="Add number"
+													control={control}
+													register={register}
+												/>
+											</div>
+										)}
+										{contactsFilterType === 'blacklist' && (
+											<div className="mt-5">
+												<DismissibleChips
+													name="contactsBlacklist"
+													label="Blacklist"
+													placeholder="Add number"
+													control={control}
+													register={register}
+												/>
+											</div>
+										)}
+									</>
+								)}
 								{botId !== 'new' && enabled && (
 									<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 ">
 										<div className="col-span-full">
