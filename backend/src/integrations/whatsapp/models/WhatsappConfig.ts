@@ -5,6 +5,9 @@ import { BaseConfigSchema, updateKnowledgebase } from '../../../models/BaseConfi
 const WhatsappConfigSchema = new mongoose.Schema({
 	...BaseConfigSchema.obj,
 	onlyContacts: { type: Boolean, default: false },
+	contactsFilterType: { type: String, default: 'all' },
+	contactsWhitelist: { type: Array, default: [] },
+	contactsBlacklist: { type: Array, default: [] },
 	linked: { type: Boolean, default: false },
 	qrcode: { type: String, default: '' }
 });

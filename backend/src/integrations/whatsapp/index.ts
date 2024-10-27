@@ -1,7 +1,7 @@
-import { WhatsappBotConfig } from './types';
+import { WhatsappBotConfig, WhatsappContactsFilterType } from './types';
 import { getWhatsappConfigById, getWhatsappConfigs, updateWhatsappConfigById } from './models/WhatsappConfig';
 import { queryGPT } from '../../services/chatgpt';
-import { ChatId, Client, LocalAuth } from 'whatsapp-web.js';
+import { Chat, ChatId, Client, LocalAuth } from 'whatsapp-web.js';
 
 const botInstances: { [key: string]: Client } = {};
 
@@ -18,13 +18,14 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 	client.on('message', async msg => {
 		const chat = await msg.getChat();
 		const isGroup = chat.isGroup;
-		const contact = await chat.getContact();
 		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
 		const currentTimestamp = Math.round(Date.now() / 1000);
 		const messageTimestamp = msg.timestamp;
 		const maxAgeInSeconds = 60;
 
-		if (config.onlyContacts && !isGroup && !contact.isMyContact) return;
+		const isContactValidated = await validateContact(config, chat);
+		if (!isContactValidated) return;
+
 		if (currentTimestamp - messageTimestamp > maxAgeInSeconds) return;
 		if (isGroup && !isMentioned) return;
 
@@ -148,6 +149,47 @@ export const stopWhatsappClient = async (id: string) => {
 	} catch (e) {
 		console.log('Error stopping Whatsapp Bot with id:', id, 'Error message:', e);
 	}
+};
+
+const validateContact = async (config: WhatsappBotConfig, chat: Chat): Promise<boolean> => {
+	const { onlyContacts, contactsFilterType, contactsWhitelist, contactsBlacklist } = config;
+	if (!onlyContacts) return true;
+
+	const isGroup = chat.isGroup;
+	const contact = await chat.getContact();
+	const contactNumber = contact.number.replace(/[\D]/gi, '');
+
+	if (contactsFilterType === WhatsappContactsFilterType.ALL) {
+		return !isGroup && contact.isMyContact;
+	}
+
+	if (contactsFilterType === WhatsappContactsFilterType.WHITELIST) {
+		let isContactWhitelisted = false;
+		contactsWhitelist.map(whitelistedContact => {
+			const cleanedWhitelistedContact = whitelistedContact.replace(/[\D]/gi, '');
+			if (contactNumber === cleanedWhitelistedContact) {
+				isContactWhitelisted = true;
+			}
+		});
+		if (!isContactWhitelisted)
+			console.log(`Blocked non-whitelisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
+		return isContactWhitelisted;
+	}
+
+	if (contactsFilterType === WhatsappContactsFilterType.BLACKLIST) {
+		let isContactBlacklisted = false;
+		contactsBlacklist.map(blacklistedContact => {
+			const cleanedBlacklistedContact = blacklistedContact.replace(/[\D]/gi, '');
+			if (contactNumber === cleanedBlacklistedContact) {
+				isContactBlacklisted = true;
+			}
+		});
+		if (isContactBlacklisted)
+			console.log(`Blocked blacklisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
+		return !isContactBlacklisted;
+	}
+
+	return true;
 };
 
 export default Whatsapp;

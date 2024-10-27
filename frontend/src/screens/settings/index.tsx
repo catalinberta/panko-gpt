@@ -107,7 +107,10 @@ const Settings: React.FC = () => {
 	const getSettings = React.useCallback(async () => {
 		const response = await apiClient.get<SettingsType>(`${ApiPaths.Settings}`);
 		setSettings(response.data);
-		reset(response.data);
+		reset({
+			...defaultValues,
+			...response.data
+		});
 	}, [reset]);
 
 	useEffect(() => {
