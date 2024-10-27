@@ -12,11 +12,12 @@ import {
 	PhoneIcon
 } from '@heroicons/react/24/outline';
 import RoutePaths from '../../constants/RoutePaths';
+import { BotConfig } from 'src/global';
 
 const Integrations = () => {
 	const params = useParams();
 	const navigate = useNavigate();
-	const [configs, setConfigs] = useState<DiscordConfig[]>([]);
+	const [configs, setConfigs] = useState<BotConfig[]>([]);
 	const integrationName = params.id || 'discord';
 
 	const formSteps = useMemo(
@@ -133,9 +134,23 @@ const Integrations = () => {
 								<td className="px-4 py-4">
 									<span className="sr-only">Status</span>
 									{config.enabled ? (
-										<div className="w-4 h-4 text-xs font-bold  bg-green-500 border-2 rounded-full border-green-900"></div>
+										params.id === 'whatsapp' && !config.linked ? (
+											<div
+												title="Unlinked to a device"
+												className="w-4 h-4 cursor-pointer text-xs font-bold  bg-orange-300 border-2 rounded-full border-orange-300"
+												onClick={() => navigate(`/whatsapp-bot-form/${config._id}`)}
+											></div>
+										) : (
+											<div
+												title="Enabled"
+												className="w-4 h-4 text-xs font-bold  bg-green-500 border-2 rounded-full border-green-900"
+											></div>
+										)
 									) : (
-										<div className="w-4 h-4 text-xs font-bold  bg-red-500 border-2 rounded-full border-red-900"></div>
+										<div
+											title="Disabled"
+											className="w-4 h-4 text-xs font-bold  bg-red-500 border-2 rounded-full border-red-900"
+										></div>
 									)}
 								</td>
 								<th scope="row" className="px-1 py-4 font-medium whitespace-nowrap text-white">

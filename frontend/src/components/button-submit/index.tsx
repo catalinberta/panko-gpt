@@ -18,11 +18,9 @@ const ButtonSubmit: React.FC<ButtonSubmitProps> = props => {
 		observer.current?.unobserve(buttonElement.current);
 		observer.current = new IntersectionObserver(
 			entries => {
-				setShowPulser(
-					Boolean(
-						(!entries[0].isIntersecting && props.pulse) || (!entries[0].isIntersecting && props.success)
-					)
-				);
+				const isInViewport = entries[0].isIntersecting;
+				const shouldPulse = Boolean((!isInViewport && props.pulse) || (!isInViewport && props.success));
+				setShowPulser(shouldPulse);
 			},
 			{ threshold: 1 }
 		);
@@ -35,15 +33,17 @@ const ButtonSubmit: React.FC<ButtonSubmitProps> = props => {
 			onClick={props.onClick}
 			disabled={props.disabled}
 			ref={buttonElement}
-			className={`rounded-md ${
-				props.pulse ? 'animation-button-pulse' : ''
-			} bg-yellow-300 px-10 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
+			className={` relative rounded-md ${props.pulse ? 'animation-button-pulse' : ''}  px-10 py-2 text-sm ${
+				props.isSubmitting || props.success ? 'text-transparent' : ''
+			} font-semibold text-gray-900 shadow-sm ${
+				!props.disabled ? 'bg-yellow-300 hover:bg-yellow-200' : 'bg-gray-200 hover:bg-gray-300'
+			} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
 		>
 			{showPulser && (
 				<div
-					className={`has-tooltip w-4 h-4 ${
-						props.success ? '-ml-2' : ''
-					} rounded-lg bg-yellow-300 fixed bottom-1 animation-button-pulse`}
+					className={`has-tooltip w-4 h-4 ml-1 rounded-lg ${
+						props.isSubmitting ? 'bg-gray-300' : 'bg-yellow-300'
+					} fixed bottom-1 animation-button-pulse`}
 					style={{ position: 'fixed', bottom: '20px' }}
 				>
 					{props.success && (
@@ -81,9 +81,10 @@ const ButtonSubmit: React.FC<ButtonSubmitProps> = props => {
 					/>
 				</svg>
 			)}
-			{props.success ? (
+			{props.label}
+			{props.success && (
 				<svg
-					className="w-5 h-5"
+					className="w-5 h-5 absolute m-auto top-0 left-0 right-0 bottom-0"
 					aria-hidden="true"
 					xmlns="http://www.w3.org/2000/svg"
 					fill="#537300"
@@ -91,8 +92,6 @@ const ButtonSubmit: React.FC<ButtonSubmitProps> = props => {
 				>
 					<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z" />
 				</svg>
-			) : (
-				props.label
 			)}
 		</button>
 	);

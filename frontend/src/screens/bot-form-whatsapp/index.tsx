@@ -79,6 +79,8 @@ const WhatsappBotForm: React.FC = () => {
 
 	const formStepParam = params['form-step'];
 
+	const isNewForm = botId === 'new';
+
 	const formSteps = useMemo(
 		() => [
 			{
@@ -94,8 +96,8 @@ const WhatsappBotForm: React.FC = () => {
 				icon: <CogIcon className="h-6 w-6" aria-hidden="true" />,
 				url: `/whatsapp-bot-form/${botId}/vector-search`,
 				isActive: formStepParam === 'vector-search',
-				disabled: botId === 'new' ? 'First create the bot to enable this section' : false,
-				tooltip: (
+				disabled: isNewForm ? 'First create the bot to enable this section' : false,
+				tooltip: isNewForm && (
 					<span className="tooltip -left-10 px-4 py-2 text-sm rounded shadow-lg p-1 gray-100 bg-black -mt-7">
 						To enable this section, first create the bot.
 					</span>
@@ -105,7 +107,8 @@ const WhatsappBotForm: React.FC = () => {
 				value: 'functions',
 				label: 'Functions',
 				icon: <RectangleStackIcon className="h-6 w-6" aria-hidden="true" />,
-				url: `/whatsapp-bot-form/${botId}/functions`
+				url: `/whatsapp-bot-form/${botId}/functions`,
+				isActive: formStepParam === 'functions'
 			},
 			{
 				value: 'skills',
@@ -579,7 +582,7 @@ const WhatsappBotForm: React.FC = () => {
 							<>
 								<button
 									type="button"
-									className=" border  focus:ring-4 focus:outline-none font-medium rounded-md text-sm px-5 py-2 text-center border-red-500 text-red-500 hover:text-white hover:bg-red-600 focus:ring-red-900"
+									className=" border focus:ring-4 focus:outline-none font-medium rounded-md text-sm px-5 py-2 text-center border-red-500 text-red-500 hover:text-white hover:bg-red-600 focus:ring-red-900"
 									onClick={deleteBot.bind(null, botId)}
 								>
 									Delete
@@ -595,7 +598,7 @@ const WhatsappBotForm: React.FC = () => {
 							</>
 						)}
 						<div className="mt-6 flex items-center justify-end gap-x-6">
-							{botId === 'new' && (
+							{isNewForm && (
 								<button
 									onClick={handleSubmit(onCreate)}
 									disabled={isSubmitting}

@@ -27,6 +27,8 @@
 
 .tooltip {
   @apply invisible absolute;
+  pointer-events: none;
+  user-select   : none;
 }
 
 .has-tooltip:hover .tooltip {
@@ -39,12 +41,12 @@
 
 @keyframes button-pulse {
   0% {
-    box-shadow : 0 0 0 0 rgba(239, 244, 151, 1);
+    box-shadow : 0 0 0 0 rgba(150, 150, 150, 1);
     text-shadow: 0 0 0 #fff;
   }
 
-  40% {
-    box-shadow: 0 0 0 20px rgba(239, 244, 151, 0);
+  20% {
+    box-shadow: 0 0 0 20px rgba(150, 150, 150, 0);
     color     : rgba(0, 0, 0, 0.75);
   }
 }
