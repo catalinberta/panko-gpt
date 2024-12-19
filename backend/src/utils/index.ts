@@ -4,7 +4,6 @@ import { JSDOM } from 'jsdom';
 import puppeteer from 'puppeteer-extra';
 import Stealth from 'puppeteer-extra-plugin-stealth';
 import AnonymizeUAPlugin from 'puppeteer-extra-plugin-anonymize-ua';
-import { TranslationServiceClient } from '@google-cloud/translate';
 import { BotConfig } from '../global';
 import { searchVectorData } from '../models/VectorData';
 import { getEmbeddingFromString } from '../services/chatgpt';
@@ -94,25 +93,6 @@ export const extractTextFromHTML = (htmlString: string): string => {
 	return recursiveTextExtraction(document.body);
 };
 
-const translate = new TranslationServiceClient();
-
-export const detectLanguage = async (acceptedLanguages: string[], content: string) => {
-	const acceptedConfidence = 0.4;
-	try {
-		const [detection] = await translate.detectLanguage({
-			parent: 'projects/panko-418815',
-			content
-		});
-		const hasMinimumConfidence =
-			detection.languages?.[0].confidence && detection.languages?.[0].confidence > acceptedConfidence;
-		const isLanguageAccepted = acceptedLanguages.includes(detection.languages?.[0].languageCode || '');
-		return hasMinimumConfidence && isLanguageAccepted ? detection.languages?.[0].languageCode : null;
-	} catch (error) {
-		console.error('Error detecting language:', error);
-	}
-	return null;
-};
-
 export const getKnowledebaseContext = async (query: string, config: BotConfig): Promise<AIMessage | null> => {
 	try {
 		const llm = new ChatOpenAI({
@@ -178,4 +158,9 @@ export const hideCredentialsFromMongoDbUrl = (url: string) => {
 		const hiddenCluster = `${clusterParts[0].slice(0, -6)}...${clusterParts.slice(1).join('.')}`;
 		return `${hiddenUser}@${hiddenCluster}${params}`;
 	});
+};
+
+export const getCurrentTime = (): string => {
+	const currentTime = String(new Date());
+	return currentTime;
 };

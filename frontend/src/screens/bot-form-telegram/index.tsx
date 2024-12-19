@@ -10,10 +10,10 @@ import RoutePaths from '../../constants/RoutePaths';
 import { Cog6ToothIcon, CogIcon, RectangleStackIcon } from '@heroicons/react/24/outline';
 import SideMenu from '../../components/side-menu';
 import WebpageContent from '@components/_functions/webpagecontent';
-import CurrentTime from '@components/_functions/currenttime';
 import Dropdown from '@components/dropdown';
 import KnowledgebaseModal from '@components/_modals/KnowledgebaseModal';
 import ButtonSubmit from '@components/button-submit';
+import SummarizerSearch from '@components/_functions/search-summarizer';
 
 const schema = z.object({
 	enabled: z.boolean(),
@@ -25,9 +25,16 @@ const schema = z.object({
 	botKey: z.string().min(1, 'This field is required'),
 	context: z.string().min(1, 'This field is required'),
 	knowledgebase: z.string(),
-	functionInternet: z.boolean(),
-	functionTime: z.boolean()
-});
+	functionUrlSummarizer: z.boolean(),
+	functionSearchSummarizer: z.boolean(),
+	functionSearchSummarizerKey: z.string()
+}).refine(
+	(data) => !data.functionSearchSummarizer || data.functionSearchSummarizerKey.trim() !== '',
+	{
+		message: 'The Brave Search API Key is required to enable Search Summarizer.',
+		path: ['functionSearchSummarizerKey'],
+	}
+);
 
 type FormFields = z.infer<typeof schema>;
 
@@ -41,8 +48,9 @@ const defaultValues = {
 	botKey: '',
 	context: '',
 	knowledgebase: '',
-	functionInternet: true,
-	functionTime: true
+	functionUrlSummarizer: true,
+	functionSearchSummarizer: false,
+	functionSearchSummarizerKey: ''
 };
 
 export interface FormStep {
@@ -485,9 +493,9 @@ const TelegramBotForm: React.FC = () => {
 						<div className="mt-6 grid gap-y-10 gap-x-6 grid-cols-2">
 							<WebpageContent
 								control={control as unknown as Control<FieldValues>}
-								name="functionInternet"
+								name="functionUrlSummarizer"
 							/>
-							<CurrentTime control={control as unknown as Control<FieldValues>} name="functionTime" />
+							<SummarizerSearch control={control as unknown as Control<FieldValues>} name="functionSearchSummarizer" />
 						</div>
 					)}
 					<div className="mt-6 flex items-center justify-end gap-x-6">

@@ -29,8 +29,9 @@ const formSchema = z
 				};
 			})
 		),
-		functionInternet: z.boolean(),
-		functionTime: z.boolean()
+		functionUrlSummarizer: z.boolean(),
+		functionSearchSummarizer: z.boolean(),
+		functionSearchSummarizerKey: z.string()
 	})
 	.superRefine((values, ctx) => {
 		if (values.contactsFilterType === 'whitelist' && values.contactsWhitelist.length === 0) {
@@ -49,6 +50,12 @@ const formSchema = z
 				path: ['contactsBlacklist']
 			});
 		}
-	});
+	}).refine(
+		(data) => !data.functionSearchSummarizer || data.functionSearchSummarizerKey.trim() !== '',
+		{
+			message: 'The Brave Search API Key is required to enable Search Summarizer.',
+			path: ['functionSearchSummarizerKey'],
+		}
+	);
 
 export default formSchema;

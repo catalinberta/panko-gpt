@@ -8,25 +8,24 @@ const WebpageContent = (props: IWebpageContentProps) => {
 	return (
 		<div className="relative flex flex-col bg-clip-border rounded-xl bg-gray-700 text-gray-700 shadow-md">
 			<div className="bg-clip-border mx-4 rounded-lg overflow-hidden bg-gradient-to-tr from-purple-700 to-purple-500 text-white shadow-purple-600/40 shadow-lg absolute right-2 -mt-2 grid h-8 px-3 place-items-center">
-				Webpage Access
+				URL Summarizer
 			</div>
 			<div className="p-4">
 				<p className="block antialiased font-sans text-md font-bold leading-normal text-white">
-					Webpage Access
+					Summarize Webpage URLs
 				</p>
 				<h4 className="block antialiased mt-2 tracking-normal font-sans text-sm font-semibold leading-snug text-white">
-					This enables the bot to both access urls inside messages and also access the internet as it sees fit
-					in order to supply more up-to-date answers.
+					This enables the bot to both access urls inside messages and access the internet via web urls as it sees fit
+					in order to enrich its context.
 				</h4>
 			</div>
-
 			<div className="border-t border-blue-gray-50 p-4">
 				<div className="block antialiased font-sans text-base leading-relaxed font-normal text-blue-gray-600 text-right">
 					<label className="inline-flex items-center mt-6 cursor-pointer flex-row-reverse">
 						<input
 							type="checkbox"
 							className="sr-only peer"
-							{...props.control?.register('functionInternet')}
+							{...props.control?.register('functionUrlSummarizer')}
 						/>
 						<div
 							className={`relative w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-white rounded-full peer bg-gray-600 peer-checked:bg-yellow-300 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-gray-600`}

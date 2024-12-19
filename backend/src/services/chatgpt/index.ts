@@ -1,14 +1,14 @@
 import 'dotenv/config';
-import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils';
+import { countGptTokens, extractArrayFromGptChunks, getCurrentTime, getKnowledebaseContext, sleep } from '../../utils';
 import { chatGptDefaults } from '../../constants';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { BotConfig } from '../../global';
 import { SystemMessage, AIMessage, HumanMessage, AIMessageChunk } from '@langchain/core/messages';
 import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
-import currentTimeTool from './tools/currentTime';
-import summarizeWebpageTool from './tools/webpageContent';
+import summarizeWebpageUrlTool from './tools/webpageContent';
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import searchSummarizerTool from './tools/searchSummarizer';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -31,19 +31,26 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 		model: gptModel
 	});
 
-	const initializedSummarizeWebpageTool = summarizeWebpageTool(config.openAiKey);
+	const initializedSummarizeWebpageUrlTool = summarizeWebpageUrlTool(config.openAiKey);
+	const initializedSearchSummarizerTool = searchSummarizerTool(config.functionSearchSummarizerKey);
+
 	const toolsByName: {
 		[key: string]: DynamicTool | DynamicStructuredTool<any>;
 	} = {
-		currentTime: currentTimeTool,
-		summarizeWebpage: initializedSummarizeWebpageTool
+		summarizeWebpageUrl: initializedSummarizeWebpageUrlTool,
+		searchSummarizer: initializedSearchSummarizerTool
 	};
-
-	const modelWithTools = model.bindTools([currentTimeTool, initializedSummarizeWebpageTool]);
+	
+	const tools = []
+	config.functionSearchSummarizer && tools.push(initializedSearchSummarizerTool);
+	config.functionUrlSummarizer && tools.push(initializedSummarizeWebpageUrlTool);
+	const modelWithTools = model.bindTools(tools);
 
 	const messages = [];
 
+	messages.push(new SystemMessage(`Current time: ${getCurrentTime()}`));
 	config.context && messages.push(new SystemMessage(config.context));
+	messages.push(new SystemMessage('Answer in the same language as the user\'s last message'));
 
 	if (config.knowledgebase) {
 		const knowledgebase = await getKnowledebaseContext(userMessage, config);
@@ -78,7 +85,7 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 	if (typeof aiResponse.content === 'string') {
 		await setPreviousMessage(config, conversationId, userMessage, aiResponse.content);
 	}
-
+	
 	return aiResponse.content;
 };
 

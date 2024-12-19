@@ -12,8 +12,9 @@ export interface BaseConfig {
 	enabled?: boolean | null;
 	detectLanguages?: string[] | null;
 	knowledgebase?: string;
-	functionInternet?: boolean;
-	functionTime?: boolean;
+	functionUrlSummarizer?: boolean;
+	functionSearchSummarizer?: boolean;
+	functionSearchSummarizerKey?: string;
 }
 
 export type BotConfig = DiscordBotConfig | TelegramBotConfig | WhatsappBotConfig;

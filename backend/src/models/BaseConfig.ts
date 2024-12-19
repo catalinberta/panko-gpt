@@ -14,8 +14,9 @@ export const BaseConfigSchema = new mongoose.Schema({
 	knowledgebase: { type: String, required: false },
 	detectLanguages: { type: Array, required: false },
 	enabled: { type: Boolean, required: false },
-	functionInternet: { type: Boolean, required: false, default: true },
-	functionTime: { type: Boolean, required: false, default: true }
+	functionUrlSummarizer: { type: Boolean, required: false, default: true },
+	functionSearchSummarizer: { type: Boolean, required: false, default: false },
+	functionSearchSummarizerKey: { type: String, required: false },
 });
 
 export const BaseConfigModel = mongoose.model('BaseConfig', BaseConfigSchema);

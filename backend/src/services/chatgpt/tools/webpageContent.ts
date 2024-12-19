@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { SystemMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOpenAI } from '@langchain/openai';
 
-const summarizeWebpage = async (apiKey: string, { userquery, url }: any): Promise<string> => {
+const summarizeWebpageUrl = async (apiKey: string, { userquery, url }: any): Promise<string> => {
 	let pageContent;
 	try {
 		pageContent = await getWebPageContentFromUrl(url);
@@ -57,11 +57,11 @@ const schema = z.object({
 	url: z.string().describe('Properly formatted URL from user query')
 });
 
-const summarizeWebpageTool = (apiKey: string) =>
-	tool(summarizeWebpage.bind(null, apiKey), {
-		name: 'summarizeWebpage',
-		description: 'Access the internet and get the summarization of a webpage',
+const summarizeWebpageUrlTool = (apiKey: string) =>
+	tool(summarizeWebpageUrl.bind(null, apiKey), {
+		name: 'summarizeWebpageUrl',
+		description: 'Get summary from a webpage url',
 		schema
 	});
 
-export default summarizeWebpageTool;
+export default summarizeWebpageUrlTool;
