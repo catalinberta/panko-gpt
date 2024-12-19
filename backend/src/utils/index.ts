@@ -159,8 +159,3 @@ export const hideCredentialsFromMongoDbUrl = (url: string) => {
 		return `${hiddenUser}@${hiddenCluster}${params}`;
 	});
 };
-
-export const getCurrentTime = (): string => {
-	const currentTime = String(new Date());
-	return currentTime;
-};

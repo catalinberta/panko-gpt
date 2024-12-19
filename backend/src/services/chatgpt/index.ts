@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { countGptTokens, extractArrayFromGptChunks, getCurrentTime, getKnowledebaseContext, sleep } from '../../utils';
+import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils';
 import { chatGptDefaults } from '../../constants';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { BotConfig } from '../../global';
@@ -48,7 +48,7 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 
 	const messages = [];
 
-	messages.push(new SystemMessage(`Current time: ${getCurrentTime()}`));
+	messages.push(new SystemMessage(`Current time: ${String(new Date())}`));
 	config.context && messages.push(new SystemMessage(config.context));
 	messages.push(new SystemMessage('Answer in the same language as the user\'s last message'));
 
