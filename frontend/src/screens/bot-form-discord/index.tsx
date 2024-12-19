@@ -118,7 +118,7 @@ const DiscordBotForm: React.FC = () => {
 					<span className="tooltip -left-10 px-4 py-2 text-sm rounded shadow-lg p-1 gray-100 bg-black -mt-7">
 						To enable this section, first create the bot.
 					</span>
-				)
+				) || <></>
 			},
 			{
 				value: 'functions',
@@ -135,7 +135,7 @@ const DiscordBotForm: React.FC = () => {
 				soon: true
 			}
 		],
-		[formStepParam, botId]
+		[formStepParam, botId, isNewForm]
 	);
 
 	const onGlobalOpenAiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
