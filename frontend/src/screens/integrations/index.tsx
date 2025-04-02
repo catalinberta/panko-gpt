@@ -136,7 +136,7 @@ const Integrations = () => {
 									{config.enabled ? (
 										params.id === 'whatsapp' && !config.linked ? (
 											<div
-												title="Unlinked to a device"
+												title="Not linked to a device"
 												className="w-4 h-4 cursor-pointer text-xs font-bold  bg-orange-300 border-2 rounded-full border-orange-300"
 												onClick={() => navigate(`/whatsapp-bot-form/${config._id}`)}
 											></div>
