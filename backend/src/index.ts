@@ -42,7 +42,6 @@ process.on('unhandledRejection', (reason: Error, promise) => {
 		console.error('Unhandled ProtocolError:', reason.message);
 	} else {
 		console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-		process.exit(1);
 	}
 });
 
@@ -62,7 +61,7 @@ server.listen(serverPort, () => {
 		console.log('Connecting to MongoDB URL', hideCredentialsFromMongoDbUrl(mongoDbUrl));
 		await connectToDb(mongoDbUrl);
 	} catch (e) {
-		console.error(`Failed to connect to MongoDB Atlas. ${e}`);
+		console.error(`Failed to connect to MongoDB Atlas. ${e}. Exiting...`);
 		process.exit(1);
 	}
 	integrations();

@@ -1,11 +1,12 @@
 import 'dotenv/config';
-import { ActivityType, Client, GatewayIntentBits, Message } from 'discord.js';
+import { ActivityType, Client, GatewayIntentBits, Message, ReactionEmoji } from 'discord.js';
 import { sendDiscordMessage } from '../../utils';
-import { queryGPT } from '../../services/chatgpt';
+import { getReactionType, queryGPT } from '../../services/chatgpt';
 import { getDiscordMessage, sendDiscordTypingInterval } from './utils';
 import { getDiscordConfigById, getDiscordConfigs } from './models/DiscordConfig';
 import { DiscordBotConfig } from './types';
 import { MessageContent } from '@langchain/core/messages';
+import { Platforms } from '../../global';
 
 const botInstances: { [key: string]: Client } = {};
 
@@ -25,10 +26,11 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 		}
 		const discordMessage = await getDiscordMessage(client, message);
 		const typingInterval = await sendDiscordTypingInterval(message);
-
 		let gptResponse: MessageContent;
+		let useReaction: boolean = false;
 		try {
 			gptResponse = await queryGPT(config, discordMessage.messageWithReply, message.channelId);
+			useReaction = true;
 		} catch (e) {
 			console.log(e);
 			sendDiscordMessage(message, 'Ewps, error from chatgpt api :pleading_face:');
@@ -36,11 +38,25 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 			return;
 		}
 		clearInterval(typingInterval);
-
+		
+		
 		try {
-			sendDiscordMessage(message, gptResponse);
+			if (typeof gptResponse === 'string') {
+				try {
+					const reaction = await getReactionType(config, Platforms.Discord, [], discordMessage.messageWithReply, gptResponse) as unknown as ReactionEmoji
+					if(reaction) {
+						message.react(reaction);
+					} else {
+						sendDiscordMessage(message, gptResponse);
+					}
+				} catch(e) {
+					sendDiscordMessage(message, gptResponse);
+				}
+				return;
+			}
+		
 		} catch (e) {
-			const errorMessage = "Discord didn't let me send the reply.";
+			const errorMessage = "Discord didn't let me send my reply.";
 			message.reply(errorMessage);
 			console.error(errorMessage, e);
 		}

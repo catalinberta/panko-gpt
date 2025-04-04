@@ -1,7 +1,8 @@
 import { WhatsappBotConfig, WhatsappContactsFilterType } from './types';
 import { getWhatsappConfigById, getWhatsappConfigs, updateWhatsappConfigById } from './models/WhatsappConfig';
-import { queryGPT } from '../../services/chatgpt';
+import { getReactionType, queryGPT } from '../../services/chatgpt';
 import { Chat, ChatId, Client, LocalAuth } from 'whatsapp-web.js';
+import { Platforms } from '../../global';
 
 const botInstances: { [key: string]: Client } = {};
 
@@ -46,10 +47,23 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 		if (typeof gptResponse !== 'string') return;
 
 		try {
-			if (isGroup) {
-				msg.reply(gptResponse);
-			} else {
-				chat.sendMessage(gptResponse);
+			try {
+				const reaction = await getReactionType(config, Platforms.Whatsapp, [], userMessage, gptResponse) as unknown as string;
+				if(reaction) {
+					await msg.react(reaction);
+				} else {
+					if (isGroup) {
+						await msg.reply(gptResponse);
+					} else {
+						await chat.sendMessage(gptResponse);
+					}
+				}
+			} catch(e) {
+				if (isGroup) {
+					msg.reply(gptResponse);
+				} else {
+					chat.sendMessage(gptResponse);
+				}
 			}
 		} catch (e) {
 			msg.reply("WhatsApp didn't let me send my reply.");
@@ -81,6 +95,7 @@ export const createWhatsappClient = async (config: WhatsappBotConfig): Promise<C
 		createOnMessageHandler(config, client);
 
 		client.on('qr', async qr => {
+			console.log(`${botName} showing QR`);
 			await updateWhatsappConfigById(config._id, {
 				linked: false,
 				qrcode: qr
