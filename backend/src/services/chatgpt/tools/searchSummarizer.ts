@@ -1,6 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import axios from 'axios';
 import { z } from 'zod';
+import logger from '../../logger';
 
 const searchSummarizer = async (apiKey?: string, userquery?: string): Promise<string> => {
 	if(!apiKey || !userquery) return '';
@@ -24,7 +25,7 @@ const searchSummarizer = async (apiKey?: string, userquery?: string): Promise<st
 			summary += summarizerDataEntity.data;
 		})
 	} catch (e: any) {
-		console.log('error running searchSummarizer()', e?.response.data);
+		logger.error(`error running searchSummarizer() ${e?.response.data}`);
 		throw new Error('Error in search summarizer.');
 	}
 

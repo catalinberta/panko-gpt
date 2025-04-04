@@ -3,6 +3,7 @@ import { insertVectorData, deleteVectorDataByBotId } from './VectorData';
 import { getEmbeddingFromString, parseTextToChunksArray } from '../services/chatgpt';
 import { v4 as uuidv4 } from 'uuid';
 import { sleep } from '../utils';
+import logger from '../services/logger';
 
 export const BaseConfigSchema = new mongoose.Schema({
 	_id: { type: Schema.Types.Mixed, default: uuidv4 },
@@ -50,6 +51,6 @@ export const updateKnowledgebase = async (id: string, content: string, openAiKey
 			await insertVectorData(data);
 		}
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 	}
 };

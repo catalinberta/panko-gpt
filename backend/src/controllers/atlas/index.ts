@@ -4,6 +4,7 @@ import { atlasDefaults } from '../../constants';
 import { getSettings, updateSettings } from '../../models/Settings';
 import { getAtlasApiClient } from '../../services/mongodb';
 import { Request, Response } from 'express';
+import logger from '../../services/logger';
 
 export const getAtlasIndexController = async (req: Request, res: Response) => {
 	const settings = await getSettings();
@@ -74,10 +75,10 @@ export const createAtlasIndexController = async (req: Request, res: Response) =>
 	try {
 		const index = await atlasApiClient.atlasSearch.create(settings?.atlasCluster!, indexBody);
 		updateSettings({ hasVectorDataSearchIndex: true });
-		console.log('create atlas index - update settings');
+		logger.info('create atlas index - update settings');
 		res.json(index);
 	} catch (e: any) {
-		console.log('error create atlas index - update settings', e);
+		logger.error(`error create atlas index - update settings ${e}`);
 		updateSettings({ hasVectorDataSearchIndex: false });
 		res.json({ error: e.message });
 	}
@@ -90,7 +91,7 @@ export const getAtlasClustersController = async (req: Request, res: Response) =>
 	}
 	const response = await atlasApiClient.cluster.getAll();
 	if ('error' in response) {
-		console.error('Atlas API Error:', response);
+		logger.error(`Atlas API Error: ${response}`);
 		res.status(500).json([]);
 		return;
 	}

@@ -1,9 +1,9 @@
 import { LabelValueObject } from '../../global';
-import { Control, FieldError, FieldValues, Path, useController, UseFormRegister } from 'react-hook-form';
+import { Control, FieldError, FieldValues, Path, PathValue, useController, UseFormRegister } from 'react-hook-form';
 
 interface DropdownProps<T extends FieldValues> {
 	name: Path<T>;
-	defaultValue?: string;
+	defaultValue?: PathValue<T, Path<T>>;
 	options: LabelValueObject[];
 	label?: string;
 	error?: FieldError;
@@ -16,7 +16,8 @@ function Dropdown<T extends FieldValues>(props: DropdownProps<T>) {
 	const { label, error } = props;
 	const { field } = useController({
 		name: props.name,
-		control: props.control
+		control: props.control,
+		defaultValue: props.defaultValue,
 	});
 
 	return (

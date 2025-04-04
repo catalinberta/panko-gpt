@@ -1,4 +1,5 @@
 import { Client, Guild, Message } from 'discord.js';
+import logger from '../../services/logger';
 
 export const replaceUserIdsWithNames = async (content: string, guild: Guild) => {
 	const userIdRegex = /\d{17,19}/g;
@@ -29,6 +30,7 @@ export const getDiscordMessage = async (
 	let repliedContent = '';
 
 	try {
+		logger.silly(`Discord message: ${userMessage}`);
 		if (message.reference && message.reference.messageId) {
 			const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
 			if (referencedMessage.content && message.mentions.repliedUser) {
@@ -36,7 +38,7 @@ export const getDiscordMessage = async (
 			}
 		}
 	} catch (error) {
-		console.error('Could not fetch referenced message:', error);
+		logger.error(`Could not fetch referenced message: ${error}`);
 	}
 	const messageWithReply = await replaceUserIdsWithNames(repliedContent + userMessage, message.guild!);
 

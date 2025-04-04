@@ -2,6 +2,7 @@ import { updateSettings } from '../models/Settings';
 import connectToMongoDB from '../services/mongodb';
 import { sleep } from '../utils';
 import { atlasDefaults } from '../constants';
+import logger from '../services/logger';
 
 const dbMaxAttempts = 10;
 const attemptDuration = 3000;
@@ -23,22 +24,22 @@ export const connectToDb = async (mongoDbUrl: string) => {
 					atlasCluster: clusterName,
 					atlasDatabase: dbName
 				});
-				console.log('Using database:', dbName);
+				logger.info(`Using database: ${dbName}`);
 			} catch (e) {
-				console.log('Error connecting to MongoDB:', e);
+				logger.error(`Error connecting to MongoDB: ${e}`);
 				process.exit(1);
 			}
 		} else {
-			console.error(`Could not connect to MongoDB after ${dbMaxAttempts} attempts. Exiting...`);
+			logger.error(`Could not connect to MongoDB after ${dbMaxAttempts} attempts. Exiting...`);
 			process.exit(1);
 		}
-		console.log('Server ready!');
+		logger.info('Server ready!');
 	} catch (e: any) {
 		if (dbCurrentAttempts === dbMaxAttempts) {
-			console.error('Max attempts reached. Error:', e);
+			logger.error(`Max attempts reached. Error: ${e}` );
 		}
-		console.log(
-			`Retrying to connect to MongoDB after ${attemptDuration} ms. Attempt ${dbCurrentAttempts}/${dbMaxAttempts}. Error: ${e?.message}	`
+		logger.info(
+			`Retrying to connect to MongoDB after ${attemptDuration} ms. Attempt ${dbCurrentAttempts}/${dbMaxAttempts}. Error: ${e?.message}`
 		);
 
 		await connectToDb(mongoDbUrl);

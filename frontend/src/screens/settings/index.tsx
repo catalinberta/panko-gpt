@@ -1,4 +1,4 @@
-import { Cog6ToothIcon, CogIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleOvalLeftIcon, Cog6ToothIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import RoutePaths from '../../constants/RoutePaths';
 import SideMenu from '../../components/side-menu';
@@ -11,6 +11,8 @@ import apiClient from '../../services/api';
 import { AtlasSearchIndexDefinition, Settings as SettingsType } from '../../services/api/types';
 import Dropdown from '@components/dropdown';
 import { chatgptDefaults } from '@constants/chatgpt';
+import { LogLevels } from '@constants/constants';
+import ButtonSubmit from '@components/button-submit';
 
 const schema = z.object({
 	openAiKey: z.string().optional(),
@@ -19,7 +21,8 @@ const schema = z.object({
 	atlasPublicKey: z.string(),
 	atlasPrivateKey: z.string(),
 	atlasProjectId: z.string(),
-	atlasCluster: z.string()
+	atlasCluster: z.string(),
+	logLevel: z.string()
 });
 
 type FormFields = z.infer<typeof schema>;
@@ -32,7 +35,8 @@ const defaultValues = {
 	atlasDatabase: '',
 	openAiKey: '',
 	chatGptModel: chatgptDefaults.model,
-	customChatGptModel: false
+	customChatGptModel: false,
+	logLevel: LogLevels.Info
 };
 
 const Settings: React.FC = () => {
@@ -40,12 +44,13 @@ const Settings: React.FC = () => {
 	const [chatgptModels, setChatgptModels] = useState<string[]>([]);
 	const [pankoIndex, setPankoIndex] = useState<AtlasSearchIndexDefinition | false | null>(null);
 	const [indexLoadingStatus, setIndexLoadingStatus] = useState(false);
+	const [showFormSuccess, setShowFormSuccess] = useState(false);
 	const {
 		register,
 		reset,
 		control,
 		watch,
-		formState: { errors, isSubmitting },
+		formState: { errors, isSubmitting, dirtyFields },
 		handleSubmit
 	} = useForm<FormFields>({
 		defaultValues,
@@ -59,20 +64,29 @@ const Settings: React.FC = () => {
 			{
 				value: 'gpt',
 				label: 'ChatGPT',
-				icon: <CogIcon className="h-6 w-6" aria-hidden="true" />,
+				icon: <ChatBubbleOvalLeftIcon className="h-6 w-6" aria-hidden="true" />,
 				url: `${RoutePaths.Settings}/gpt`,
 				isActive: settingsCategoryParam === 'gpt'
 			},
 			{
 				value: 'vector-search',
 				label: 'Vector Search',
-				icon: <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />,
+				icon: <MagnifyingGlassIcon className="h-6 w-6" aria-hidden="true" />,
 				url: `${RoutePaths.Settings}/vector-search`,
 				isActive: settingsCategoryParam === 'vector-search'
+			},
+			{
+				value: 'system',
+				label: 'System',
+				icon: <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />,
+				url: `${RoutePaths.Settings}/system`,
+				isActive: settingsCategoryParam === 'system'
 			}
 		],
 		[settingsCategoryParam]
 	);
+
+	const isFormDirty = Object.keys(dirtyFields).length;
 
 	const getIndex = useCallback(() => {
 		apiClient
@@ -146,6 +160,10 @@ const Settings: React.FC = () => {
 		await apiClient.post<SettingsType>(ApiPaths.Settings, data);
 		await getSettings();
 		getAllChatgptModels();
+		setShowFormSuccess(true);
+		setTimeout(() => {
+			setShowFormSuccess(false);
+		}, 2000);
 	};
 
 	return (
@@ -323,20 +341,41 @@ const Settings: React.FC = () => {
 										</div>
 									</div>
 								)}
+								{settingsCategoryParam === 'system' && (
+									<>
+										<div className="col-span-full">
+											<h1 className="text-2xl text-yellow-500" id="home">
+												System
+											</h1>
+										</div>
+										<Dropdown
+											name="logLevel"
+											label="Log Level"
+											control={control}
+											error={errors.logLevel}
+											register={register}
+											defaultValue='info'
+											options={Object.keys(LogLevels).map(value => ({
+												label: value,
+												value: value.toLowerCase()
+											}))}
+										/>
+									</>
+								)}
 							</div>
 						</div>
 					</div>
 				</form>
 
 				<div className="mt-5 mb-5 flex items-center justify-end gap-x-6">
-					<button
-						type="submit"
-						disabled={isSubmitting}
-						className="rounded-md bg-yellow-300 px-10 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+					<ButtonSubmit
+						label="Edit"
+						pulse={!!isFormDirty}
 						onClick={handleSubmit(onSubmit)}
-					>
-						Save
-					</button>
+						disabled={isSubmitting || showFormSuccess}
+						isSubmitting={isSubmitting}
+						success={showFormSuccess}
+					/>
 				</div>
 			</main>
 		</div>

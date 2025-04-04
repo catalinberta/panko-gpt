@@ -7,13 +7,14 @@ import {
 	updateTelegramConfigById,
 	deleteTelegramConfigById
 } from '../models/TelegramConfig';
+import logger from '../../../services/logger';
 
 export const getTelegramConfigsController = async (req: Request, res: Response) => {
 	try {
 		const telegramConfigs = await getTelegramConfigs();
 		return res.json(telegramConfigs);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -23,7 +24,7 @@ export const getTelegramConfigByIdController = async (req: Request, res: Respons
 		const telegramConfig = await getTelegramConfigById(req.params.id);
 		return res.json(telegramConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -34,7 +35,7 @@ export const createTelegramConfigController = async (req: Request, res: Response
 		telegramConfig.enabled && createTelegramClient(telegramConfig);
 		return res.json(telegramConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -49,7 +50,7 @@ export const updateTelegramConfigController = async (req: Request, res: Response
 		}
 		return res.json(telegramConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -60,7 +61,7 @@ export const deleteTelegramConfigByIdController = async (req: Request, res: Resp
 		await stopTelegramClient(req.params.id);
 		return res.json(telegramConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
