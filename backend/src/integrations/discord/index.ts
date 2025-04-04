@@ -6,7 +6,8 @@ import { getDiscordMessage, sendDiscordTypingInterval } from './utils';
 import { getDiscordConfigById, getDiscordConfigs } from './models/DiscordConfig';
 import { DiscordBotConfig } from './types';
 import { MessageContent } from '@langchain/core/messages';
-import { Platforms } from '../../global';
+import { Platforms } from '../../constants';
+import logger from '../../services/logger';
 
 const botInstances: { [key: string]: Client } = {};
 
@@ -32,13 +33,12 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 			gptResponse = await queryGPT(config, discordMessage.messageWithReply, message.channelId);
 			useReaction = true;
 		} catch (e) {
-			console.log(e);
+			logger.error(`Discord onmessage error: ${e}`);
 			sendDiscordMessage(message, 'Ewps, error from chatgpt api :pleading_face:');
 			clearInterval(typingInterval);
 			return;
 		}
 		clearInterval(typingInterval);
-		
 		
 		try {
 			if (typeof gptResponse === 'string') {
@@ -58,7 +58,7 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 		} catch (e) {
 			const errorMessage = "Discord didn't let me send my reply.";
 			message.reply(errorMessage);
-			console.error(errorMessage, e);
+			logger.error(`${errorMessage} ${e}`);
 		}
 	});
 };
@@ -74,7 +74,7 @@ export const createDiscordClient = async (config: DiscordBotConfig) => {
 	});
 
 	client.on('ready', () => {
-		console.log(`${config.internalName || config.botName} is Online!`);
+		logger.info(`${config.internalName || config.botName} is Online!`);
 		client.user?.setActivity({
 			name: config.botStatusText ?? 'Hello World!',
 			type: ActivityType.Custom
@@ -86,7 +86,7 @@ export const createDiscordClient = async (config: DiscordBotConfig) => {
 		createOnMessageHandler(config, client);
 		botInstances[config._id] = client;
 	} catch (e) {
-		console.log('Error connecting Discord Bot with config:', config, 'Error message:', e);
+		logger.error(`Error connecting Discord Bot with config: ${config} | Error message: ${e}`);
 	}
 
 	return client;
@@ -102,7 +102,7 @@ export const restartDiscordClient = async (id: string) => {
 			await createDiscordClient(config);
 		}
 	} catch (e) {
-		console.log('Error restarting Discord Bot with id:', id, 'Error message:', e);
+		logger.error(`Error restarting Discord Bot with id: ${id} | Error message: ${e}`);
 	}
 };
 
@@ -112,9 +112,9 @@ export const stopDiscordClient = async (id: string) => {
 		if (!config) return;
 		await botInstances[id]?.destroy();
 		delete botInstances[id];
-		console.log(`${config.botName} is Offline!`);
+		logger.info(`${config.botName} is Offline!`);
 	} catch (e) {
-		console.log('Error stopping Discord Bot with id:', id, 'Error message:', e);
+		logger.error(`Error stopping Discord Bot with id: ${id} | Error message: ${e}`);
 	}
 };
 
@@ -134,7 +134,7 @@ export const getDiscordClientId = async (config: DiscordBotConfig) => {
 		await client.destroy();
 		return clientId;
 	} catch (e) {
-		console.log('Error connecting Discord Bot with config:', config, 'Error message:', e);
+		logger.info(`Error connecting Discord Bot with config: ${config} | Error message: ${e}`);
 	}
 
 	return null;

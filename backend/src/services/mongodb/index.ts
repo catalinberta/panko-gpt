@@ -4,6 +4,7 @@ import atlasClient, { AtlasClient, AtlasError } from 'mongodb-atlas-api-client';
 import { getSettings } from '../../models/Settings';
 import { AtlasSearchIndexDefinition } from '../../api/types';
 import { atlasDefaults } from '../../constants';
+import logger from '../logger';
 
 export const connectToMongoDB = async (mongoDbUrl: string, dbName: string) => {
 	const connectionTimeout = 30_000;
@@ -35,15 +36,15 @@ export const getAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefinition 
 	let pankoIndex: AtlasSearchIndexDefinition | false = false;
 	const atlasApiClient = await getAtlasApiClient();
 	if (!atlasApiClient) {
-		console.log('Error getting atlas client');
+		logger.error('Error getting atlas client');
 		return pankoIndex;
 	}
 	if (!settings?.atlasCluster) {
-		console.log('Cluster name not specified');
+		logger.error('Cluster name not specified');
 		return pankoIndex;
 	}
 	if (!settings?.atlasDatabase) {
-		console.log('Database name not specified');
+		logger.error('Database name not specified');
 		return pankoIndex;
 	}
 	const indexes: AtlasSearchIndexDefinition[] | AtlasError = await atlasApiClient.atlasSearch.getAll(
@@ -58,9 +59,8 @@ export const getAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefinition 
 		}
 	);
 	if ('error' in indexes) {
-		console.error(
-			`Atlas API Error - Could not get atlas indexes with data cluster ${settings?.atlasCluster} and database ${settings?.atlasDatabase}. Error message:`,
-			indexes.error
+		logger.error(
+			`Atlas API Error - Could not get atlas indexes with data cluster ${settings?.atlasCluster} and database ${settings?.atlasDatabase}. Error message: ${indexes.error}`
 		);
 		return pankoIndex;
 	}
@@ -71,7 +71,7 @@ export const getAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefinition 
 			}
 		});
 	} catch (e) {
-		console.error('Error iterating indexes', e);
+		logger.error(`Error iterating indexes ${e}`);
 	}
 	return pankoIndex;
 };
@@ -102,10 +102,10 @@ export const createAtlasSearchIndex = async (): Promise<AtlasSearchIndexDefiniti
 	};
 	try {
 		const index = await atlasApiClient.atlasSearch.create(settings?.atlasCluster!, indexBody);
-		console.log('create atlas index - update settings true');
+		logger.info('create atlas index - update settings true');
 		return index;
 	} catch (e: any) {
-		console.log('error create atlas index - update settings false', e);
+		logger.error(`error create atlas index - update settings false ${e}`);
 		return { error: e.message };
 	}
 };

@@ -1,6 +1,6 @@
 {
 	"name": "panko-gpt",
-	"version": "0.7.3",
+	"version": "0.7.4",
 	"description": "PankoGPT Backend - ChatGPT bot creation platform",
 	"main": "index.js",
 	"directories": {
@@ -59,6 +59,7 @@
 		"uuid": "^9.0.1",
 		"whatsapp-web.js": "^1.27.0",
 		"winston": "^3.17.0",
+		"winston-daily-rotate-file": "^5.0.0",
 		"zod": "^3.23.8"
 	}
 }

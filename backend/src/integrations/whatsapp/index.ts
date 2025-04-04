@@ -2,7 +2,8 @@ import { WhatsappBotConfig, WhatsappContactsFilterType } from './types';
 import { getWhatsappConfigById, getWhatsappConfigs, updateWhatsappConfigById } from './models/WhatsappConfig';
 import { getReactionType, queryGPT } from '../../services/chatgpt';
 import { Chat, ChatId, Client, LocalAuth } from 'whatsapp-web.js';
-import { Platforms } from '../../global';
+import { Platforms } from '../../constants';
+import logger from '../../services/logger';
 
 const botInstances: { [key: string]: Client } = {};
 
@@ -36,11 +37,13 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 		chat.sendStateTyping();
 		const userMessage: string = `${authorName}: ${msg.body}`;
 
+		logger.silly(`Whatsapp message: ${userMessage} `);
+
 		let gptResponse;
 		try {
 			gptResponse = await queryGPT(config, userMessage, msg.from);
 		} catch (e) {
-			console.log(e);
+			logger.error(e);
 			msg.reply('Ewps, error from chatgpt api :pleading_face:');
 			return;
 		}
@@ -67,7 +70,7 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 			}
 		} catch (e) {
 			msg.reply("WhatsApp didn't let me send my reply.");
-			console.error(`Error sending message to WhatsApp`, e);
+			logger.error(`Error sending message to WhatsApp ${e}`);
 		}
 	});
 };
@@ -95,28 +98,28 @@ export const createWhatsappClient = async (config: WhatsappBotConfig): Promise<C
 		createOnMessageHandler(config, client);
 
 		client.on('qr', async qr => {
-			console.log(`${botName} showing QR`);
+			logger.info(`${botName} showing QR`);
 			await updateWhatsappConfigById(config._id, {
 				linked: false,
 				qrcode: qr
 			});
 		});
 		client.on('ready', async () => {
-			console.log(`${botName} is Online!`);
+			logger.info(`${botName} is Online!`);
 			await updateWhatsappConfigById(config._id, {
 				linked: true,
 				qrcode: ''
 			});
 		});
 		client.on('authenticated', async () => {
-			console.log(`${botName} authenticated`);
+			logger.info(`${botName} authenticated`);
 			await updateWhatsappConfigById(config._id, {
 				linked: true,
 				qrcode: ''
 			});
 		});
 		client.on('disconnected', async e => {
-			console.log(`${botName} disconnected`, e);
+			logger.info(`${botName} disconnected`, e);
 			await updateWhatsappConfigById(config._id, {
 				enabled: false,
 				linked: false,
@@ -124,7 +127,7 @@ export const createWhatsappClient = async (config: WhatsappBotConfig): Promise<C
 			});
 		});
 	} catch (e) {
-		console.log('Error connecting Whatsapp Bot with config:', config, 'Error message:', e);
+		logger.error(`Error connecting Whatsapp Bot with config: ${config} | Error message: ${e}`);
 	}
 
 	return client;
@@ -134,16 +137,16 @@ export const restartWhatsappClient = async (id: string) => {
 	try {
 		const config = await getWhatsappConfigById(id);
 		if (!config) {
-			console.log('No config found to restart');
+			logger.warn('No config found to restart');
 			return;
 		}
-		console.log('Restarting', config.internalName);
+		logger.info('Restarting', config.internalName);
 
 		botInstances[id]?.destroy();
 		delete botInstances[id];
 		await createWhatsappClient(config);
 	} catch (e) {
-		console.log('Error restarting Whatsapp Bot with id:', id, 'Error message:', e);
+		logger.error(`Error restarting Whatsapp Bot with id: ${id} | Error message: ${e}`);
 	}
 };
 
@@ -153,7 +156,7 @@ export const unlinkWhatsappClient = async (id: string) => {
 		botInstances[id]?.destroy();
 		delete botInstances[id];
 	} catch (e) {
-		console.log('Error unlinking whatsapp', e);
+		logger.error(`Error unlinking whatsapp ${e}`);
 	}
 };
 
@@ -162,7 +165,7 @@ export const stopWhatsappClient = async (id: string) => {
 		botInstances[id]?.destroy();
 		delete botInstances[id];
 	} catch (e) {
-		console.log('Error stopping Whatsapp Bot with id:', id, 'Error message:', e);
+		logger.error(`Error stopping Whatsapp Bot with id: ${id} | Error message: ${e}`);
 	}
 };
 
@@ -187,7 +190,7 @@ const validateContact = async (config: WhatsappBotConfig, chat: Chat): Promise<b
 			}
 		});
 		if (!isContactWhitelisted)
-			console.log(`Blocked non-whitelisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
+			logger.info(`Blocked non-whitelisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
 		return isContactWhitelisted;
 	}
 
@@ -200,7 +203,7 @@ const validateContact = async (config: WhatsappBotConfig, chat: Chat): Promise<b
 			}
 		});
 		if (isContactBlacklisted)
-			console.log(`Blocked blacklisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
+			logger.info(`Blocked blacklisted number: ${contactNumber}. Received message: ${chat.lastMessage.body}`);
 		return !isContactBlacklisted;
 	}
 

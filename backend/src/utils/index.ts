@@ -11,6 +11,7 @@ import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { encode } from 'gpt-3-encoder';
 import { AIMessage, MessageContent } from '@langchain/core/messages';
+import logger from '../services/logger';
 
 puppeteer.use(Stealth());
 puppeteer.use(AnonymizeUAPlugin());
@@ -57,14 +58,14 @@ export const getWebPageContentFromUrl = async (url: string) => {
 	try {
 		await page.goto(url, { waitUntil: 'domcontentloaded' });
 	} catch (e) {
-		console.log('Error opening url', e);
+		logger.error(`Error opening url ${e}`);
 		throw new Error(`Error opening ${url}, might be protected`);
 	}
 	let pageSourceHTML;
 	try {
 		pageSourceHTML = await page.content();
 	} catch (e) {
-		console.log('error accessing page', e);
+		logger.error(`error accessing page ${e}`);
 	}
 	await browser.close();
 	return pageSourceHTML || '';
@@ -121,7 +122,7 @@ export const getKnowledebaseContext = async (query: string, config: BotConfig): 
 
 		return langchainMessage;
 	} catch (e) {
-		console.log('Error getting data from knowledgebase', e);
+		logger.error(`Error getting data from knowledgebase {e}`);
 		return null;
 	}
 };
@@ -146,7 +147,7 @@ export const extractArrayFromGptChunks = (inputString: string | null): string[] 
 		}
 		return chunks;
 	} catch (e) {
-		console.log('Error extracting array from chunk value');
+		logger.error(`Error extracting array from chunk value ${e}`);
 		return [];
 	}
 };

@@ -7,13 +7,14 @@ import {
 	updateDiscordConfigById,
 	deleteDiscordConfigById
 } from '../models/DiscordConfig';
+import logger from '../../../services/logger';
 
 export const getDiscordConfigsController = async (req: Request, res: Response) => {
 	try {
 		const discordConfigs = await getDiscordConfigs();
 		return res.json(discordConfigs);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -23,7 +24,7 @@ export const getDiscordConfigByIdController = async (req: Request, res: Response
 		const discordConfig = await getDiscordConfigById(req.params.id);
 		return res.json(discordConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -46,7 +47,7 @@ export const createDiscordConfigController = async (req: Request, res: Response)
 		}
 		return res.json(discordConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -61,7 +62,7 @@ export const updateDiscordConfigController = async (req: Request, res: Response)
 		}
 		return res.json(config);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -72,7 +73,7 @@ export const deleteDiscordConfigByIdController = async (req: Request, res: Respo
 		await stopDiscordClient(req.params.id);
 		return res.json(discordConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };

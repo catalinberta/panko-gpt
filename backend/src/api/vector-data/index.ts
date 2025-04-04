@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { getVectorData, searchVectorData } from '../../models/VectorData';
 import { getEmbeddingFromString } from '../../services/chatgpt';
+import logger from '../../services/logger';
 
 export default (router: express.Router) => {
 	router.get('/chunks', getChunksHandler);
@@ -15,7 +16,7 @@ const searchVectorDataHandler = async (req: Request, res: Response) => {
 		if (!results) return res.sendStatus(404);
 		return res.json(results);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -25,7 +26,7 @@ const getChunksHandler = async (req: Request, res: Response) => {
 		const settings = await getVectorData(req.query.botId as string);
 		return res.json(settings || {});
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };

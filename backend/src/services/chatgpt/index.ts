@@ -9,7 +9,7 @@ import summarizeWebpageUrlTool from './tools/webpageContent';
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import searchSummarizerTool from './tools/searchSummarizer';
-import { ReactionEmoji } from 'discord.js';
+import logger from '../logger';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -26,6 +26,8 @@ const textToChunksContext = `
 
 export const queryGPT = async (config: BotConfig, userMessage: string, conversationId: string): Promise<MessageContent> => {
 	const gptModel = config.chatGptModel || chatGptDefaults.model;
+
+	logger.verbose(`Using model: ${gptModel}`);
 
 	const model = new ChatOpenAI({
 		openAIApiKey: config.openAiKey,
@@ -72,13 +74,17 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 	messages.push(new HumanMessage(userMessage));
 	messages.push(new SystemMessage('Answer in the same language as the last message'));
 
+	logger.silly(`llm messages: ${messages}`);
+
 	let aiResponse: AIMessageChunk = await modelWithTools.invoke(messages);
 
 	if (aiResponse.tool_calls && aiResponse.tool_calls.length) {
 		messages.push(aiResponse);
 		for (const toolCall of aiResponse.tool_calls) {
+			logger.silly(`Using llm tool: ${toolCall.name}`);
 			const selectedTool = toolsByName[toolCall.name];
 			const toolMessage = await selectedTool.invoke(toolCall);
+			logger.silly(`Tool response: ${toolMessage}`);
 			messages.push(toolMessage);
 		}
 		aiResponse = await modelWithTools.invoke(messages);
@@ -86,6 +92,8 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 	if (typeof aiResponse.content === 'string') {
 		await setPreviousMessage(config, conversationId, userMessage, aiResponse.content);
 	}
+
+	logger.silly(`Llm response: ${aiResponse.content}`);
 	
 	return aiResponse.content;
 };
@@ -122,6 +130,10 @@ export const getReactionType = async (config: BotConfig, platform: string, emoji
 	`));
 
 	const aiResponse = await model.invoke(messages);
+
+	if(aiResponse.content) {
+		logger.verbose(`Using reaction: ${aiResponse.content}`);
+	}
 	
 	return aiResponse.content;
 };
@@ -141,7 +153,7 @@ export const getEmbeddingFromString = async (apiKey: string, content: string) =>
 			tokens
 		};
 	} catch (error) {
-		console.error('Error generating text embedding:', error);
+		logger.error(`Error generating text embedding: ${error}`);
 		throw error;
 	}
 };
@@ -157,7 +169,7 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 
 	const splitterOutput = await splitter.createDocuments([text]);
 	const textSplits = splitterOutput.map(output => output.pageContent);
-	console.log(
+	logger.info(
 		`Knowledgebase Update: Processing ${textSplits.length} batches of ~${textBatchSize} chars each. Please wait...`
 	);
 	const model = new ChatOpenAI({
@@ -177,15 +189,15 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 			if (typeof gptResponse.content !== 'string') throw 'GPT Response is not a string';
 			const chunks = extractArrayFromGptChunks(gptResponse.content);
 			chunksArray.push(...chunks);
-			console.log(
+			logger.info(
 				`Knowledgebase Update: ${currentIndex + 1}/${textSplits.length}  : Pushing ${chunks.length} chunks`
 			);
 			if (textSplits.length === currentIndex + 1) {
-				console.log('Knowledgebase Update: Finished!');
+				logger.info('Knowledgebase Update: Finished!');
 			}
 			await sleep(500);
 		} catch (e) {
-			console.log('Error processing knowledgebase chunks from input', e);
+			logger.error(`Error processing knowledgebase chunks from input ${e}`);
 		}
 	};
 

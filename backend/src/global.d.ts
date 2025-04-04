@@ -18,9 +18,3 @@ export interface BaseConfig {
 }
 
 export type BotConfig = DiscordBotConfig | TelegramBotConfig | WhatsappBotConfig;
-
-export enum Platforms {
-	 Discord = "Discord",
-	 Telegram = "Telegram",
-	 Whatsapp = "Whatsapp"
-}

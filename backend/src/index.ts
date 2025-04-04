@@ -10,6 +10,8 @@ import path from 'path';
 import atlasConfigurator, { configureIndex } from './services/mongodb/atlasConfigurator';
 import { connectToDb } from './db/connect';
 import { hideCredentialsFromMongoDbUrl } from './utils';
+import logger, { setLogLevel } from './services/logger';
+import { getSettings } from './models/Settings';
 
 const app = express();
 
@@ -39,9 +41,9 @@ app.use((req, res, next) => {
 
 process.on('unhandledRejection', (reason: Error, promise) => {
 	if (reason.name === 'ProtocolError') {
-		console.error('Unhandled ProtocolError:', reason.message);
+		logger.error(`Unhandled ProtocolError: ${reason.message}`);
 	} else {
-		console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+		logger.error(`Unhandled Rejection at: ${promise} | reason: ${reason}`);
 	}
 });
 
@@ -49,21 +51,29 @@ const server = http.createServer(app);
 const serverPort = 5002;
 
 server.listen(serverPort, () => {
-	console.log(`API running on http://localhost:${serverPort}`);
+	logger.info(`API running on http://localhost:${serverPort}`);
 });
+
+const init = async () => {
+	const settings = await getSettings();
+	setLogLevel(settings?.logLevel!);
+}
+
 (async () => {
 	try {
 		const mongoDbUrl = await atlasConfigurator();
 		if (!mongoDbUrl) {
-			console.error('Could not get MongoDB URL');
+			logger.error('Could not get MongoDB URL');
 			return;
 		}
-		console.log('Connecting to MongoDB URL', hideCredentialsFromMongoDbUrl(mongoDbUrl));
+		logger.info(`Connecting to MongoDB URL ${hideCredentialsFromMongoDbUrl(mongoDbUrl)}`);
 		await connectToDb(mongoDbUrl);
 	} catch (e) {
-		console.error(`Failed to connect to MongoDB Atlas. ${e}. Exiting...`);
+		logger.error(`Failed to connect to MongoDB Atlas. ${e}. Exiting...`);
 		process.exit(1);
 	}
+	init()
 	integrations();
 	await configureIndex();
 })();
+

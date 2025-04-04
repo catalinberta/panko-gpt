@@ -3,13 +3,14 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { SystemMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOpenAI } from '@langchain/openai';
+import logger from '../../logger';
 
 const summarizeWebpageUrl = async (apiKey: string, { userquery, url }: any): Promise<string> => {
 	let pageContent;
 	try {
 		pageContent = await getWebPageContentFromUrl(url);
 	} catch (e) {
-		console.log('getWebPageContentFromUrl()', e);
+		logger.error(`getWebPageContentFromUrl() ${e}`);
 		throw new Error('Error opening page, might be protected from scraping.');
 	}
 

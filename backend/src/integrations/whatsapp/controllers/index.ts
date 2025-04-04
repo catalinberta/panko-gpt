@@ -7,13 +7,14 @@ import {
 	updateWhatsappConfigById,
 	deleteWhatsappConfigById
 } from '../models/WhatsappConfig';
+import logger from '../../../services/logger';
 
 export const getWhatsappConfigsController = async (req: Request, res: Response) => {
 	try {
 		const whatsappConfigs = await getWhatsappConfigs();
 		return res.json(whatsappConfigs);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -23,7 +24,7 @@ export const getWhatsappConfigByIdController = async (req: Request, res: Respons
 		const whatsappConfig = await getWhatsappConfigById(req.params.id);
 		return res.json(whatsappConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -35,7 +36,7 @@ export const createWhatsappConfigController = async (req: Request, res: Response
 		whatsappConfig.enabled && createWhatsappClient(whatsappConfig);
 		return res.json(whatsappConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -50,7 +51,7 @@ export const updateWhatsappConfigController = async (req: Request, res: Response
 		}
 		return res.json(whatsappConfigs);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };
@@ -65,7 +66,7 @@ export const unlinkWhatsappConfigByIdController = async (req: Request, res: Resp
 		await unlinkWhatsappClient(req.params.id);
 		return res.json(config);
 	} catch (error) {
-		console.log('Error unlinking Whatsapp client', error);
+		logger.error(`Error unlinking Whatsapp client ${error}`);
 		return res.sendStatus(400);
 	}
 };
@@ -76,7 +77,7 @@ export const deleteWhatsappConfigByIdController = async (req: Request, res: Resp
 		await unlinkWhatsappClient(req.params.id);
 		return res.json(whatsappConfig);
 	} catch (error) {
-		console.log(error);
+		logger.error(error);
 		return res.sendStatus(400);
 	}
 };

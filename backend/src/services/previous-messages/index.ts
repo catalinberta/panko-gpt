@@ -2,6 +2,7 @@ import { countGptTokens } from '../../utils';
 import { BotConfig } from '../../global';
 import { ChatOpenAI } from '@langchain/openai';
 import { SystemMessage, HumanMessage } from '@langchain/core/messages';
+import logger from '../logger';
 
 const messages: { [key: string]: any[] } = {};
 
@@ -41,7 +42,7 @@ export const setPreviousMessage = async (
 				content: gptResponseForUser.content
 			});
 		} catch (e) {
-			console.log('Got error when requesting ChatGPT to summarize userMessage', e);
+			logger.error(`Got error when requesting ChatGPT to summarize userMessage {e}`);
 		}
 	} else {
 		messages[channelId].push({
@@ -62,7 +63,7 @@ export const setPreviousMessage = async (
 				content: gptResponseForAssistant.content
 			});
 		} catch (e) {
-			console.log('Got error when requesting ChatGPT to summarize assistantMessage', e);
+			logger.error(`Got error when requesting ChatGPT to summarize assistantMessage {e}`);
 		}
 	} else {
 		messages[channelId].push({
