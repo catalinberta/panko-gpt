@@ -3,12 +3,13 @@ import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, slee
 import { chatGptDefaults } from '../../constants';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { BotConfig } from '../../global';
-import { SystemMessage, AIMessage, HumanMessage, AIMessageChunk } from '@langchain/core/messages';
+import { SystemMessage, AIMessage, HumanMessage, AIMessageChunk, MessageContent } from '@langchain/core/messages';
 import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
 import summarizeWebpageUrlTool from './tools/webpageContent';
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import searchSummarizerTool from './tools/searchSummarizer';
+import { ReactionEmoji } from 'discord.js';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -23,7 +24,7 @@ const textToChunksContext = `
 	Your response should strictly adhere to text segmentation without providing answers, explanations, or interpretations of the user's text content. 
 `;
 
-export const queryGPT = async (config: BotConfig, userMessage: string, conversationId: string) => {
+export const queryGPT = async (config: BotConfig, userMessage: string, conversationId: string): Promise<MessageContent> => {
 	const gptModel = config.chatGptModel || chatGptDefaults.model;
 
 	const model = new ChatOpenAI({
@@ -50,15 +51,14 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 
 	messages.push(new SystemMessage(`Current time: ${String(new Date())}`));
 	config.context && messages.push(new SystemMessage(config.context));
-	messages.push(new SystemMessage('Answer in the same language as the user\'s last message'));
-
+	
 	if (config.knowledgebase) {
 		const knowledgebase = await getKnowledebaseContext(userMessage, config);
 		knowledgebase && messages.push(knowledgebase);
 	}
-
+	
 	const previousMessages = getPreviousMessages(conversationId);
-
+	
 	if (previousMessages) {
 		previousMessages.map(previousMessage => {
 			if (previousMessage.role === 'user') {
@@ -70,6 +70,7 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 		});
 	}
 	messages.push(new HumanMessage(userMessage));
+	messages.push(new SystemMessage('Answer in the same language as the last message'));
 
 	let aiResponse: AIMessageChunk = await modelWithTools.invoke(messages);
 
@@ -85,6 +86,42 @@ export const queryGPT = async (config: BotConfig, userMessage: string, conversat
 	if (typeof aiResponse.content === 'string') {
 		await setPreviousMessage(config, conversationId, userMessage, aiResponse.content);
 	}
+	
+	return aiResponse.content;
+};
+
+export const getReactionType = async (config: BotConfig, platform: string, emojiList: string[], userMessage: string, gptAnswer: string) => {
+	const gptModel = config.chatGptModel || chatGptDefaults.model;
+
+	const model = new ChatOpenAI({
+		openAIApiKey: config.openAiKey,
+		model: gptModel
+	});
+
+	const messages = [];
+
+	messages.push(new SystemMessage(`You are an intelligent assistant that decides whether an AI response was necessary or if a simple emoji reaction was sufficient.`));
+	
+	if(emojiList && emojiList.length) {
+		messages.push(new SystemMessage(`Supported emojis are: ${emojiList.join(', ')}.`));
+	}
+
+	messages.push(new SystemMessage(`
+		- If the user's message is a basic gratitude or redundant confirmation (e.g., "Thanks!", "Got it", "Cool", "Okay", "Yes", "Understood", "Sure"), return a suitable ${platform} emoji (e.g. 🤗).  
+		- **Do not react if the message is a question, even if it does not end with a question mark.** This includes anything seeking information, explanations, or calculations (e.g., "What's 2+2", "Tell me how this works", "Explain this").  
+		- **Do not react if the user made a request** (e.g., "Send me that file", "Generate a summary", "Give me an example").  
+		- **Do not react if the reply had a question.
+		- **Do not react if the reply had any form of explanation.
+		- Avoid using very common emojis repeatedly. Instead, vary them randomly when appropriate.  
+		- Your only scope is to ensure an emoji is only returned instead of saying welcome to a user's appreciation.
+		- If you are not sure or confident about the decision, return nothing.
+		- If the AI's reply made sense or clarified anything, return nothing.  
+		- Do not include any explanations or extra text—only return the ${platform} emoji or nothing.
+
+		Message: User: "${userMessage}" | AI: "${gptAnswer}"  
+	`));
+
+	const aiResponse = await model.invoke(messages);
 	
 	return aiResponse.content;
 };

@@ -1,8 +1,11 @@
 import { Telegraf, Context } from 'telegraf';
 import { TelegramBotConfig } from './types';
 import { getTelegramConfigById, getTelegramConfigs } from '../../integrations/telegram/models/TelegramConfig';
-import { queryGPT } from '../../services/chatgpt';
+import { getReactionType, queryGPT } from '../../services/chatgpt';
 import { MessageContent } from '@langchain/core/messages';
+import { Platforms } from '../../global';
+
+const supportedEmojis = ['👍', '👎', '❤️', '🔥', '🎉', '🤩', '😱', '😁', '😢', '💩', '🤮', '🥰', '🤯', '🤔', '🤬', '👏'];
 
 const botInstances: { [key: string]: Telegraf<Context> } = {};
 
@@ -34,7 +37,19 @@ const createOnMessageHandler = (config: TelegramBotConfig, client: Telegraf<Cont
 		}
 		if (typeof gptResponse !== 'string') return;
 		try {
-			ctx.reply(gptResponse);
+			
+			try {
+				const reaction = await getReactionType(config, Platforms.Telegram, supportedEmojis, userMessage, gptResponse)
+				if(reaction) {
+					//@ts-ignore
+					await ctx.react(reaction);
+				} else {
+					await ctx.reply(gptResponse);
+				}
+			} catch(e) {
+				ctx.reply(gptResponse);
+			}
+			return;
 		} catch (e) {
 			ctx.reply("Telegram didn't let me send my reply.");
 			console.error(`Error sending message to Telegram`, e);
