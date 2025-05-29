@@ -6,7 +6,24 @@ import { MessageContent } from '@langchain/core/messages';
 import { Platforms } from '../../constants';
 import logger from '../../services/logger';
 
-const supportedEmojis = ['👍', '👎', '❤️', '🔥', '🎉', '🤩', '😱', '😁', '😢', '💩', '🤮', '🥰', '🤯', '🤔', '🤬', '👏'];
+const supportedEmojis = [
+	'👍',
+	'👎',
+	'❤️',
+	'🔥',
+	'🎉',
+	'🤩',
+	'😱',
+	'😁',
+	'😢',
+	'💩',
+	'🤮',
+	'🥰',
+	'🤯',
+	'🤔',
+	'🤬',
+	'👏'
+];
 
 const botInstances: { [key: string]: Telegraf<Context> } = {};
 
@@ -30,7 +47,7 @@ const createOnMessageHandler = (config: TelegramBotConfig, client: Telegraf<Cont
 
 		logger.silly(`Telegram message: ${userMessage} `);
 
-		let gptResponse: MessageContent;
+		let gptResponse;
 		try {
 			gptResponse = await queryGPT(config, userMessage, ctx.message.chat.id.toString());
 		} catch (e) {
@@ -38,19 +55,24 @@ const createOnMessageHandler = (config: TelegramBotConfig, client: Telegraf<Cont
 			ctx.reply('Ewps, error from chatgpt api :pleading_face:');
 			return;
 		}
-		if (typeof gptResponse !== 'string') return;
+		if (typeof gptResponse.response !== 'string') return;
 		try {
-			
 			try {
-				const reaction = await getReactionType(config, Platforms.Telegram, supportedEmojis, userMessage, gptResponse)
-				if(reaction) {
+				const reaction = await getReactionType(
+					config,
+					Platforms.Telegram,
+					supportedEmojis,
+					userMessage,
+					gptResponse.response
+				);
+				if (reaction) {
 					//@ts-ignore
 					await ctx.react(reaction);
 				} else {
-					await ctx.reply(gptResponse);
+					await ctx.reply(gptResponse.response);
 				}
-			} catch(e) {
-				ctx.reply(gptResponse);
+			} catch (e) {
+				ctx.reply(gptResponse.response);
 			}
 			return;
 		} catch (e) {

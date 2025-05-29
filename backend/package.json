@@ -41,7 +41,7 @@
 		"compression": "^1.7.4",
 		"cookie-parser": "^1.4.6",
 		"cors": "^2.8.5",
-		"discord.js": "^14.14.1",
+		"discord.js": "^14.18.0",
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
 		"gpt-3-encoder": "^1.1.4",

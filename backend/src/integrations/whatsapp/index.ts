@@ -47,25 +47,31 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 			msg.reply('Ewps, error from chatgpt api :pleading_face:');
 			return;
 		}
-		if (typeof gptResponse !== 'string') return;
+		if (typeof gptResponse.response !== 'string') return;
 
 		try {
 			try {
-				const reaction = await getReactionType(config, Platforms.Whatsapp, [], userMessage, gptResponse) as unknown as string;
-				if(reaction) {
+				const reaction = (await getReactionType(
+					config,
+					Platforms.Whatsapp,
+					[],
+					userMessage,
+					gptResponse.response
+				)) as unknown as string;
+				if (reaction) {
 					await msg.react(reaction);
 				} else {
 					if (isGroup) {
-						await msg.reply(gptResponse);
+						await msg.reply(gptResponse.response);
 					} else {
-						await chat.sendMessage(gptResponse);
+						await chat.sendMessage(gptResponse.response);
 					}
 				}
-			} catch(e) {
+			} catch (e) {
 				if (isGroup) {
-					msg.reply(gptResponse);
+					msg.reply(gptResponse.response);
 				} else {
-					chat.sendMessage(gptResponse);
+					chat.sendMessage(gptResponse.response);
 				}
 			}
 		} catch (e) {

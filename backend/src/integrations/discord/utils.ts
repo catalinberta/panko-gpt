@@ -1,4 +1,4 @@
-import { Client, Guild, Message } from 'discord.js';
+import { Channel, Client, Guild, Message, AttachmentBuilder, MessageCreateOptions } from 'discord.js';
 import logger from '../../services/logger';
 
 export const replaceUserIdsWithNames = async (content: string, guild: Guild) => {
@@ -49,9 +49,39 @@ export const getDiscordMessage = async (
 };
 
 export const sendDiscordTypingInterval = async (message: Message) => {
-	await message.channel.sendTyping();
+	const sendTyping = async (channel: Channel) => {
+		if (channel && 'sendTyping' in channel && typeof channel.sendTyping === 'function') {
+			await channel.sendTyping();
+		}
+	};
+
+	sendTyping(message.channel);
 	const sendTypingInterval = setInterval(async () => {
-		await message.channel.sendTyping();
+		sendTyping(message.channel);
 	}, 5000);
+
 	return sendTypingInterval;
 };
+
+export function renderFullDiscordMessage(modelOutput: any): MessageCreateOptions {
+	const { content, components, attachments } = modelOutput;
+	logger.silly(`renderFullDiscordMessage: ${JSON.stringify(modelOutput, null, 2)}`);
+
+	const renderedAttachments = (attachments || []).map((att: any) => new AttachmentBuilder(att.url).setName(att.name));
+
+	const v2Components: any[] = [];
+
+	if (content) {
+		v2Components.push({
+			type: 10,
+			content: content
+		});
+	}
+
+	return {
+		// content: content,
+		flags: 1 << 15, // Enable V2 components
+		components: components || []
+		// files: renderedAttachments
+	};
+}

@@ -16,17 +16,26 @@ import logger from '../services/logger';
 puppeteer.use(Stealth());
 puppeteer.use(AnonymizeUAPlugin());
 
-export const sendDiscordMessage = async (message: Message, assistantMessage: MessageContent) => {
-	if (typeof assistantMessage !== 'string') return;
+export const sendDiscordMessage = async (
+	message: Message,
+	assistantMessage: MessageContent,
+	discordMessagePayload?: any
+) => {
 	const discordCharacterLimit = 2000;
-	if (assistantMessage.length >= discordCharacterLimit) {
+	if (discordMessagePayload.content && discordMessagePayload.content.length >= discordCharacterLimit) {
 		(function sendDiscordMessage(assistantMessage) {
-			message.reply(assistantMessage.substring(0, discordCharacterLimit));
+			discordMessagePayload.content = assistantMessage.substring(0, discordCharacterLimit);
+			message.reply(discordMessagePayload);
 			if (assistantMessage.length <= discordCharacterLimit) return;
-			setTimeout(sendDiscordMessage.bind(null, assistantMessage.substring(discordCharacterLimit)), 1000);
-		})(assistantMessage);
+			setTimeout(
+				sendDiscordMessage.bind(null, (assistantMessage as string).substring(discordCharacterLimit)),
+				1000
+			);
+		})(discordMessagePayload.content);
 	} else {
-		message.reply(assistantMessage);
+		message.reply(discordMessagePayload).catch(e => {
+			console.log(8, e);
+		});
 	}
 };
 
