@@ -47,29 +47,21 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 			msg.reply('Ewps, error from chatgpt api :pleading_face:');
 			return;
 		}
-		if (typeof gptResponse !== 'string') return;
+		if (typeof gptResponse.response !== 'string') return;
 
 		try {
-			try {
-				const reaction = await getReactionType(config, Platforms.Whatsapp, [], userMessage, gptResponse) as unknown as string;
-				if(reaction) {
-					await msg.react(reaction);
-				} else {
-					if (isGroup) {
-						await msg.reply(gptResponse);
-					} else {
-						await chat.sendMessage(gptResponse);
-					}
-				}
-			} catch(e) {
-				if (isGroup) {
-					msg.reply(gptResponse);
-				} else {
-					chat.sendMessage(gptResponse);
-				}
+			if (await handleReaction(config, userMessage, gptResponse, msg, chat, isGroup)) return;
+			if (isGroup) {
+				await msg.reply(gptResponse.response);
+			} else {
+				await chat.sendMessage(gptResponse.response);
 			}
 		} catch (e) {
-			msg.reply("WhatsApp didn't let me send my reply.");
+			if (isGroup) {
+				msg.reply(gptResponse.response);
+			} else {
+				chat.sendMessage(gptResponse.response);
+			}
 			logger.error(`Error sending message to WhatsApp ${e}`);
 		}
 	});
@@ -208,6 +200,26 @@ const validateContact = async (config: WhatsappBotConfig, chat: Chat): Promise<b
 	}
 
 	return true;
+};
+
+const handleReaction = async (
+	config: WhatsappBotConfig,
+	userMessage: string,
+	gptResponse: any,
+	msg: any,
+	chat: any,
+	isGroup: boolean
+): Promise<boolean> => {
+	try {
+		const reaction = await getReactionType(config, Platforms.Whatsapp, [], userMessage, gptResponse.response);
+		if (reaction) {
+			await msg.react(reaction);
+			return true;
+		}
+	} catch (e) {
+		logger.error(`Error reacting to WhatsApp message: ${e}`);
+	}
+	return false;
 };
 
 export default Whatsapp;

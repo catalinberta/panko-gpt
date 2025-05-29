@@ -1,11 +1,11 @@
 import 'dotenv/config';
-import { ActivityType, Client, GatewayIntentBits, Message, ReactionEmoji } from 'discord.js';
+import { ActivityType, Client, GatewayIntentBits, Message } from 'discord.js';
 import { sendDiscordMessage } from '../../utils';
-import { getReactionType, queryGPT } from '../../services/chatgpt';
+import { getComponents, getReactionType, queryGPT } from '../../services/chatgpt';
 import { getDiscordMessage, sendDiscordTypingInterval } from './utils';
 import { getDiscordConfigById, getDiscordConfigs } from './models/DiscordConfig';
 import { DiscordBotConfig } from './types';
-import { MessageContent } from '@langchain/core/messages';
+import { SystemMessage } from '@langchain/core/messages';
 import { Platforms } from '../../constants';
 import logger from '../../services/logger';
 
@@ -22,42 +22,33 @@ const Discord = async () => {
 const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 	client.on('messageCreate', async (message: Message) => {
 		if (message.author.bot) return;
-		if (client.user && !message.mentions.users.has(client.user.id)) {
-			return;
-		}
+		if (client.user && !message.mentions.users.has(client.user.id)) return;
+
 		const discordMessage = await getDiscordMessage(client, message);
 		const typingInterval = await sendDiscordTypingInterval(message);
-		let gptResponse: MessageContent;
-		let useReaction: boolean = false;
+
+		let gptResponse;
 		try {
-			gptResponse = await queryGPT(config, discordMessage.messageWithReply, message.channelId);
-			useReaction = true;
+			gptResponse = await handleGPTResponse(config, discordMessage, message);
 		} catch (e) {
 			logger.error(`Discord onmessage error: ${e}`);
 			sendDiscordMessage(message, 'Ewps, error from chatgpt api :pleading_face:');
 			clearInterval(typingInterval);
 			return;
 		}
+
+		logger.silly(`Discord gpt response: ${gptResponse}`);
 		clearInterval(typingInterval);
-		
+
+		if (await handleReaction(config, discordMessage, gptResponse, message)) return;
+
+		const componentResponse = await handleComponents(config, discordMessage, gptResponse);
+
 		try {
-			if (typeof gptResponse === 'string') {
-				try {
-					const reaction = await getReactionType(config, Platforms.Discord, [], discordMessage.messageWithReply, gptResponse) as unknown as ReactionEmoji
-					if(reaction) {
-						message.react(reaction);
-					} else {
-						sendDiscordMessage(message, gptResponse);
-					}
-				} catch(e) {
-					sendDiscordMessage(message, gptResponse);
-				}
-				return;
-			}
-		
+			sendDiscordMessage(message, gptResponse.response, JSON.parse(componentResponse as string));
 		} catch (e) {
-			const errorMessage = "Discord didn't let me send my reply.";
-			message.reply(errorMessage);
+			message.reply(gptResponse.response);
+			const errorMessage = `Discord didn't let me send my reply. Used components: ${Boolean(componentResponse)}`;
 			logger.error(`${errorMessage} ${e}`);
 		}
 	});
@@ -138,6 +129,47 @@ export const getDiscordClientId = async (config: DiscordBotConfig) => {
 	}
 
 	return null;
+};
+
+const handleGPTResponse = async (config: DiscordBotConfig, discordMessage: any, message: Message) => {
+	const customPrompt = {
+		system: [
+			new SystemMessage(
+				'This message will receive further processing and possibly use Discord native components to enrich messaging on Discord. This includes buttons, content layouts, embeds etc.'
+			)
+		]
+	};
+
+	return await queryGPT(config, discordMessage.messageWithReply, message.channelId, [], {}, customPrompt);
+};
+
+const handleReaction = async (config: DiscordBotConfig, discordMessage: any, gptResponse: any, message: Message) => {
+	const reaction = await getReactionType(
+		config,
+		Platforms.Discord,
+		[],
+		discordMessage.messageWithReply,
+		gptResponse.response
+	);
+	if (reaction) {
+		try {
+			await message.react(reaction);
+			return true;
+		} catch (e) {
+			logger.error(`Error reacting to message: ${e}`);
+		}
+	}
+	return false;
+};
+
+const handleComponents = async (config: DiscordBotConfig, discordMessage: any, gptResponse: any) => {
+	return await getComponents(
+		config,
+		Platforms.Discord,
+		gptResponse.toolMessages,
+		discordMessage.messageWithReply,
+		gptResponse.response
+	);
 };
 
 export default Discord;
