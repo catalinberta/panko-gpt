@@ -34,7 +34,7 @@ export const sendDiscordMessage = async (
 		})(discordMessagePayload.content);
 	} else {
 		message.reply(discordMessagePayload).catch(e => {
-			console.log(8, e);
+			logger.error(`Error sending discord message: ${e}`);
 		});
 	}
 };

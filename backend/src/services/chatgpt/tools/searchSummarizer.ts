@@ -100,7 +100,7 @@ const searchSummarizer = async (apiKey?: string, userquery?: string): Promise<Su
 	logger.silly(
 		`searchSummarizer completed for query "${userquery}". Summary length: ${result.summary.length}, Image URL: ${result.imageUrl}`
 	);
-	console.log(3958737534, result);
+
 	return result;
 };
 

@@ -55,26 +55,10 @@ const createOnMessageHandler = (config: TelegramBotConfig, client: Telegraf<Cont
 			ctx.reply('Ewps, error from chatgpt api :pleading_face:');
 			return;
 		}
-		if (typeof gptResponse.response !== 'string') return;
+
 		try {
-			try {
-				const reaction = await getReactionType(
-					config,
-					Platforms.Telegram,
-					supportedEmojis,
-					userMessage,
-					gptResponse.response
-				);
-				if (reaction) {
-					//@ts-ignore
-					await ctx.react(reaction);
-				} else {
-					await ctx.reply(gptResponse.response);
-				}
-			} catch (e) {
-				ctx.reply(gptResponse.response);
-			}
-			return;
+			if (await handleReaction(config, userMessage, gptResponse, ctx)) return;
+			await ctx.reply(gptResponse.response);
 		} catch (e) {
 			ctx.reply("Telegram didn't let me send my reply.");
 			logger.error(`Error sending message to Telegram ${e}`);
@@ -118,6 +102,31 @@ export const stopTelegramClient = async (id: string) => {
 	} catch (e) {
 		logger.error(`Error stopping Telegram Bot with id: ${id} | Error message: ${e}`);
 	}
+};
+
+const handleReaction = async (
+	config: TelegramBotConfig,
+	userMessage: string,
+	gptResponse: any,
+	ctx: Context
+): Promise<boolean> => {
+	try {
+		const reaction = await getReactionType(
+			config,
+			Platforms.Telegram,
+			supportedEmojis,
+			userMessage,
+			gptResponse.response
+		);
+		if (reaction) {
+			// @ts-ignore
+			await ctx.react(reaction);
+			return true;
+		}
+	} catch (e) {
+		logger.error(`Error reacting to Telegram message: ${e}`);
+	}
+	return false;
 };
 
 export default Telegram;
