@@ -135,7 +135,7 @@ const handleGPTResponse = async (config: DiscordBotConfig, discordMessage: any, 
 	const customPrompt = {
 		system: [
 			new SystemMessage(
-				'This message will receive further processing and possibly use Discord native components to enrich messaging on Discord. This includes buttons, content layouts, embeds etc.'
+				'This message will receive further processing and possibly use Discord native components to enrich messaging on Discord. This includes buttons, content layouts, media etc.'
 			)
 		]
 	};

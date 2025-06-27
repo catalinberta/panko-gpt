@@ -36,7 +36,7 @@ const ButtonSubmit: React.FC<ButtonSubmitProps> = props => {
 			className={` relative rounded-md ${props.pulse ? 'animation-button-pulse' : ''}  px-10 py-2 text-sm ${
 				props.isSubmitting || props.success ? 'text-transparent' : ''
 			} font-semibold text-gray-900 shadow-sm ${
-				!props.disabled ? 'bg-yellow-300 hover:bg-yellow-200' : 'bg-gray-200 hover:bg-gray-300'
+				!props.disabled ? 'bg-testcolor hover:bg-yellow-200' : 'bg-gray-200 hover:bg-gray-300'
 			} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
 		>
 			{showPulser && (

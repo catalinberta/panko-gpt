@@ -222,9 +222,9 @@ export const getComponents = async (
 			`
 			You are an AI tool that parses a user message and its chatgpt response and prepares the response for Discord Components V2.
 				- Messages must also have a top-level "content" field for plain text.
-				- Messages can optionally include an "embeds" array for rich content blocks. Use embeds to significantly improve visual presentation.
 				- Messages can optionally include a "components" array for interactive elements. Use components only for clear user interaction.
-
+				- Do not use "embeds" for text content. 
+				
 			Supported Components (within Action Rows, type: 1):
 
 				- "button" (ONLY for links, type: 2): must have "label", "url", style must always be "link" (style: 5). DO NOT use "custom_id" for link buttons. Optional: "emoji" ({ "name", "id"?, "animated"? }), "disabled".
@@ -234,13 +234,9 @@ export const getComponents = async (
 
 				- Embed object must have "type": "rich".
 				- Optional properties within an embed object (leverage these for detailed, visually appealing, and well-structured presentation):
-					- "title": string (max 256 characters). Use for a clear, concise summary of the embed content.
-					- "description": string (max 4096 characters). Use for the main body of text within the embed.
 					- "color": integer (decimal color code, e.g., 3447003 for blue). **Choose a color that fits the message tone, theme, or urgency.**
 					- "fields": array of field objects (max 25 fields). Use for presenting data in a list or table format.
 						- Each field object: { "name": string (max 256 char), "value": string (max 1024 char), "inline"?: boolean (defaults to false) }
-					- "author": object (optional): { "name": string (max 256 char), "url"?: string, "icon_url"?: string }. **Use for attribution or bot branding.**
-					- "footer": object (optional): { "text": string (max 2048 char), "icon_url"?: string }. **Use for supplemental information like timestamps, sources, or disclaimers.**
 					- "image": object (optional): { "url": string }. **Use for a prominent image related to the core content of the embed.**
 					- "thumbnail": object (optional): { "url": string }. **Use for a smaller image (like an icon or logo) displayed on the side of the embed.**
 					- "timestamp": string (ISO 8601 timestamp, e.g., "2023-04-26T09:00:00.000Z") (optional). **Use for time-sensitive information.**
@@ -253,28 +249,14 @@ export const getComponents = async (
 				- Do NOT use custom component types like "text", "media", "container", or "section" in the final Discord components array. These are internal concepts for structuring the response before conversion.
 
 			Embed Usage Rules:
-				- Use embeds for structured information, lists, quotes, formatted text blocks, or to highlight information with a title, color, image, or thumbnail.
-				- If the ChatGPT response contains distinct sections, bullet points that can be converted to fields, or content suitable for a title/description format, consider using an embed.
-				- Tabular/Structured Data: If the response contains data that can be organized into columns and rows (like a list of items with properties, a comparison, or a simple dataset), represent this data using embed fields.
-					- Create one field object for *each column* of the table.
-					- Use the column header as the field "name".
-					- Use the data for each row in that column, with each row's data separated by a newline character (\n), as the field "value".
-					- Set the "inline" property to "true" for fields that represent columns you want to appear side-by-side.
-					- Ensure that the number of newline-separated entries (rows) in the "value" of each inline column field is consistent.
-				- Visual Enhancement: **Actively utilize** optional properties like 'color', 'author', 'footer', 'image', and 'thumbnail' in embeds when the content allows to make the message more visually appealing, provide context (source, branding), or feature relevant media.
+				- Only use embeds for images, thumbnails or other media, never for text.
 
 			General Rendering Rules:
-				- Text Formatting: **Use Discord Markdown** (bold **text**, italics *text* or _text_, underline __text__, strikethrough ~~text~~, inline code \`\`code\`\`, code blocks \`\`\`code\`\`\`, block quotes > text, links [text](url)) within the "content" field and applicable embed properties (like "description", "fields" values, "footer" text, "author" name) where appropriate for clarity, emphasis, or structure.
-				- **Content Field Strategy:** Carefully determine the content of the top-level "content" field based on whether embeds or components are generated and how much information they contain:
+				- Text Formatting: **Use Discord Markdown** (bold **text**, italics *text* or _text_, underline __text__, strikethrough ~~text~~, inline code \`\`code\`\`, code blocks \`\`\`code\`\`\`, block quotes > text, links [text](url)) within the "content" field and applicable embed properties (like "description", "fields" values, "author" name) where appropriate for clarity, emphasis, or structure.
+				- **Content Field Strategy:** Carefully determine the content of the top-level "content" field based on whether components are generated and how much information they contain:
 					- If **neither** embeds nor components are included in the response, the "content" field **must** contain the **full original text** of the message.
 					- If **embeds or components are included**, the "content" field should **avoid duplicating** information that is already clearly and fully conveyed by the embeds or components.
-					- In this case (embeds/components used), the "content" field should serve one of the following purposes:
-						- A brief introductory sentence to the embeds/components (e.g., "Here is the information you requested:", "Please see the details below:").
-						- Essential standalone text that provides context not fully covered by the embeds/components.
-						- A partial piece of text that is completed or elaborated upon by the embeds/components.
-						- If the embeds and components **together comprehensively present the entire message** and require no additional introductory or contextual text in the top-level message, the "content" field **should be an empty string ("")** to prevent redundancy.
 				- Only render components if they truly enhance the message (e.g., interactive elements, distinct layout elements).
-				- Only render embeds if they significantly improve the presentation of the content (e.g., structured data, visual elements, tables).
 				- If neither components nor embeds are necessary based on the response, provide the full response in the "content" field only.
 				- Do NOT wrap your answer in markdown or triple backticks.
 				- Respond with VALID DISCORD V2 JSON ONLY. No explanations or comments.
@@ -283,26 +265,6 @@ export const getComponents = async (
 				
 			{
 				"content": "This is the main text content.",
-				"embeds": [
-					{
-					"type": "rich",
-					"title": "Optional Embed Title",
-					"description": "This is the embed description.",
-					"color": 16711680,
-					"fields": [
-						{
-						"name": "Field 1",
-						"value": "Value 1",
-						"inline": true
-						},
-						{
-						"name": "Field 2",
-						"value": "Value 2",
-						"inline": true
-						}
-					]
-					}
-				],
 				"components": [
 					{
 					"type": 1,

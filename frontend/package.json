@@ -2,7 +2,7 @@
 	"name": "interface",
 	"description": "PankoGPT Frontend - ChatGPT bot creation platform",
 	"private": true,
-	"version": "0.7.6",
+	"version": "0.7.7",
 	"type": "module",
 	"scripts": {
 		"dev": "vite --host",

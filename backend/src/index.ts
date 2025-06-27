@@ -57,7 +57,7 @@ server.listen(serverPort, () => {
 const init = async () => {
 	const settings = await getSettings();
 	setLogLevel(settings?.logLevel!);
-}
+};
 
 (async () => {
 	try {
@@ -72,8 +72,7 @@ const init = async () => {
 		logger.error(`Failed to connect to MongoDB Atlas. ${e}. Exiting...`);
 		process.exit(1);
 	}
-	init()
+	init();
 	integrations();
 	await configureIndex();
 })();
-
