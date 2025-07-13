@@ -3,7 +3,7 @@ services:
         container_name: pankogpt-prod
         build:
             context: .
-        image: panko-gpt:0.7.7
+        image: panko-gpt:0.7.8
         environment:
             - MONGO_ATLAS_PUBLIC_KEY=
             - MONGO_ATLAS_PRIVATE_KEY=
