@@ -49,7 +49,7 @@ function SystemSettingsPage() {
 
 	return (
 		<>
-			<h2 className="text-lg font-semibold leading-none tracking-tight mt-5">ChatGPT Settings</h2>
+			<h2 className="text-lg font-semibold leading-none tracking-tight mt-5">System</h2>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-5">
 					<Select name="logLevel" control={form.control} label="Log Level" data={logLevels} />

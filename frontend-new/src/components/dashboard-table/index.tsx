@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import React from 'react';
 import { Badge } from '../ui/badge';
 import { CardTitle } from '../ui/card';
+import RoutePaths from '@/constants/RoutePaths';
+import Link from 'next/link';
 
 interface DashboardTableProps {
 	title: string;
@@ -27,24 +29,29 @@ const DashboardTable = async ({ title, configs }: DashboardTableProps) => {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{configs.map(config => (
-								<TableRow key={config._id}>
-									<TableCell className="text-center">
-										<Badge
-											className={`h-3 min-w-3 rounded-full mt-1 p-0 font-mono tabular-nums ${
-												config.enabled ? 'bg-green-400' : 'bg-red-400'
-											}`}
-										></Badge>
-									</TableCell>
-									<TableCell className="font-medium">
-										{config.internalName || config.botName}
-									</TableCell>
-									<TableCell>{config._id}</TableCell>
-									<TableCell className="text-center">
-										<Button size="sm">View</Button>
-									</TableCell>
-								</TableRow>
-							))}
+							{configs.map(config => {
+								const url = `${RoutePaths.CompanionsDiscord}/${config._id}`;
+								return (
+									<TableRow key={config._id}>
+										<TableCell className="text-center">
+											<Badge
+												className={`h-3 min-w-3 rounded-full mt-1 p-0 font-mono tabular-nums ${
+													config.enabled ? 'bg-green-400' : 'bg-red-400'
+												}`}
+											></Badge>
+										</TableCell>
+										<TableCell className="font-medium">
+											{config.internalName || config.botName}
+										</TableCell>
+										<TableCell>{config._id}</TableCell>
+										<TableCell className="text-center">
+											<Button asChild size="sm">
+												<Link href={url}>View</Link>
+											</Button>
+										</TableCell>
+									</TableRow>
+								);
+							})}
 						</TableBody>
 					</Table>
 				</div>

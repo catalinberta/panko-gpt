@@ -8,7 +8,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } fr
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
-		<Sidebar collapsible="icon" {...props}>
+		<Sidebar className="sticky" collapsible="icon" {...props}>
 			<SidebarHeader>
 				<TeamSwitcher />
 			</SidebarHeader>

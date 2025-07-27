@@ -1,0 +1,316 @@
+'use client';
+import { Button } from '@/components/ui/button';
+import ButtonSubmit from '@/components/_form/button';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Form } from '@/components/ui/form'; // ✅ Correct: use your UI wrapper
+
+import { z } from 'zod';
+
+import { useEffect, useState } from 'react';
+import React from 'react';
+import { Eye } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import TextInput from '@/components/_form/text-input';
+import Select from '@/components/_form/select';
+import useChatgptStore from '@/store/chatgpt';
+import Textarea from '@/components/_form/textarea';
+import Checkbox from '@/components/_form/checkbox';
+import { useFetchDiscordConfig } from '@/queries/companions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCreateCompanion, useDeleteCompanion, useUpdateCompanion } from '@/mutations/companion';
+import RoutePaths from '@/constants/RoutePaths';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import KnowledgebaseModal from '@/components/_modals/knowledgebase-chunks';
+import WebpageContentToolCard from '@/components/_tool-cards/webpage-content';
+import SummarizerSearch from '@/components/_tool-cards/search-summarizer';
+import { extractErrorMessage } from '@/lib/utils';
+import Switch from '@/components/_form/switch';
+
+const formSchema = z
+	.object({
+		enabled: z.boolean(),
+		botName: z.string(),
+		internalName: z.string().min(1, 'This field is required'),
+		botStatusText: z.string(),
+		openAiKey: z.string().min(1, 'This field is required'),
+		chatGptModel: z.string().min(1, 'This field is required'),
+		customChatGptModel: z.boolean(),
+		botKey: z.string().min(1, 'This field is required'),
+		context: z.string().min(1, 'This field is required'),
+		knowledgebase: z.string(),
+		functionUrlSummarizer: z.boolean(),
+		functionSearchSummarizer: z.boolean(),
+		functionSearchSummarizerKey: z.string()
+	})
+	.refine(
+		data =>
+			!data.functionSearchSummarizer ||
+			(data.functionSearchSummarizer && data.functionSearchSummarizerKey.trim().length > 0),
+		{
+			message: 'To enable Search Sumarizer, please provide a Brave API Key',
+			path: ['functionSearchSummarizerKey']
+		}
+	);
+
+const defaultValues = {
+	enabled: true,
+	botName: '',
+	internalName: '',
+	botStatusText: '',
+	openAiKey: '',
+	chatGptModel: '',
+	customChatGptModel: false,
+	botKey: '',
+	context: '',
+	knowledgebase: '',
+	functionUrlSummarizer: true,
+	functionSearchSummarizer: false,
+	functionSearchSummarizerKey: ''
+};
+
+function CompanionFormPage() {
+	const [formSubmitting, setFormSubmitting] = useState(false);
+	const [showFormSuccess, setShowFormSuccess] = useState(false);
+	const [clientId, setClientId] = useState<string | null>(null);
+	const [generalError, setGeneralError] = useState<string | null>(null);
+	const chatgptModels = useChatgptStore(state => state.models);
+	const { companionid: companionId }: { companionid: string } = useParams();
+	const { data: config } = useFetchDiscordConfig(companionId);
+	const updateCompanion = useUpdateCompanion();
+	const createCompanion = useCreateCompanion();
+	const deleteCompanion = useDeleteCompanion();
+
+	const isNewCompanion = companionId === 'create';
+
+	const router = useRouter();
+	const form = useForm<z.infer<typeof formSchema>>({
+		resolver: zodResolver(formSchema),
+		defaultValues
+	});
+
+	const customChatGptModel = form.watch('customChatGptModel');
+
+	const showChatgptModelsDropdown = !customChatGptModel && chatgptModels.length;
+
+	const isFormDirty = Object.keys(form.formState.dirtyFields).length;
+
+	useEffect(() => {
+		if (!config) return;
+		form.reset({
+			...defaultValues,
+			...config
+		});
+		if (config.clientId) setClientId(config.clientId);
+	}, [config, form]);
+
+	const onJoinBot = () => {
+		window.open(
+			`https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=2048&scope=bot`,
+			'_blank',
+			'noopener,noreferrer'
+		);
+	};
+
+	const onViewKnowledgebase = () => {};
+	const onDelete = async () => {
+		await deleteCompanion.mutateAsync(companionId);
+		router.push('/' + RoutePaths.Dashboard);
+	};
+
+	const showFormSuccessToast = () => {
+		setShowFormSuccess(true);
+		setTimeout(() => {
+			setShowFormSuccess(false);
+		}, 2000);
+	};
+
+	const onSubmit = async (values: z.infer<typeof formSchema>) => {
+		setGeneralError(null);
+		setFormSubmitting(true);
+		values.botName = values.internalName; // botName is not yet used
+		try {
+			if (isNewCompanion) {
+				const response = await createCompanion.mutateAsync({ values });
+				router.push(`/${RoutePaths.CompanionsDiscord}/${response.data._id}`);
+			} else {
+				await updateCompanion.mutateAsync({ companionId, values });
+			}
+			form.reset(form.getValues(), { keepDirty: false });
+			showFormSuccessToast();
+		} catch (error) {
+			const errorMessage = extractErrorMessage(error);
+			setGeneralError(errorMessage);
+		} finally {
+			setFormSubmitting(false);
+		}
+	};
+
+	return (
+		<>
+			<h2 className="text-lg font-semibold leading-none tracking-tight mt-5">Companion form</h2>
+			<Form {...form}>
+				<form onSubmit={form.handleSubmit(onSubmit)}>
+					<Tabs defaultValue="general">
+						<TabsList>
+							<TabsTrigger className="cursor-pointer" value="general">
+								General
+							</TabsTrigger>
+							<TabsTrigger className="cursor-pointer" value="vector-search">
+								Vector Search
+							</TabsTrigger>
+							<TabsTrigger className="cursor-pointer" value="functions">
+								Functions
+							</TabsTrigger>
+						</TabsList>
+						<TabsContent value="general">
+							<div className="space-y-8 mt-5">
+								<Switch name="enabled" label="Enabled" vertical control={form.control} />
+								<TextInput
+									name="internalName"
+									control={form.control}
+									label="Internal name"
+									description={'Name to internally differentiate between multiple companions'}
+								/>
+								<TextInput
+									name="botStatusText"
+									control={form.control}
+									label="Bot status"
+									description={'Bot status that appears on Discord'}
+								/>
+								<TextInput name="openAiKey" control={form.control} label="OpenAI key" />
+								{!showChatgptModelsDropdown && (
+									<TextInput
+										className="mb-2"
+										name="chatGptModel"
+										control={form.control}
+										label="Custom ChatGPT model"
+									/>
+								)}
+								{showChatgptModelsDropdown && (
+									<Select
+										className="mb-2"
+										name="chatGptModel"
+										control={form.control}
+										label="Global ChatGPT model"
+										placeholder="ChatGPT Models"
+										description="Hint: Specify the OpenAI Key in Settings to automatically fetch and see all ChatGPT models available here."
+										data={chatgptModels.map(value => ({
+											label: value,
+											value: value
+										}))}
+									/>
+								)}
+								<Checkbox
+									name="customChatGptModel"
+									control={form.control}
+									label="Custom ChatGPT model"
+								/>
+								<TextInput
+									name="botKey"
+									control={form.control}
+									label="Discord bot key"
+									description={
+										<span>
+											Head over to{' '}
+											<a
+												className="text-blue-400 hover:text-blue-300"
+												href="https://discord.com/developers/applications"
+											>
+												Discord Developer Applications
+											</a>{' '}
+											create a bot, and from the Bot section: Enable all intents and then paste
+											the token here.
+										</span>
+									}
+								/>
+								<Textarea
+									className="mb-2"
+									name="context"
+									control={form.control}
+									label="Context & instructions"
+									description={
+										<>
+											<span>
+												It helps if you properly format multiple instructions with a start and
+												end, for example:
+											</span>
+											<br />
+											<span>
+												- You could start all of your instructions with a dash and end them with
+												a semi-colon;
+											</span>
+										</>
+									}
+								/>
+
+								{clientId && (
+									<Button className="cursor-pointer rounded-sm h-8" onClick={onJoinBot} type="button">
+										Click here to join your bot in a server
+									</Button>
+								)}
+							</div>
+						</TabsContent>
+						<TabsContent value="vector-search">
+							<div className="space-y-8 mt-5">
+								<Textarea
+									componentClassName="h-100"
+									name="knowledgebase"
+									control={form.control}
+									label={
+										<div className="flex flex-1 items-center justify-between">
+											<span>Knowledgebase</span>
+											<Dialog>
+												<DialogTrigger
+													className="cursor-pointer rounded-sm h-7"
+													onClick={onViewKnowledgebase}
+												>
+													<span className="flex items-center">
+														<Eye className="mr-2" /> View structured knowledgebase
+													</span>
+												</DialogTrigger>
+
+												<KnowledgebaseModal close={() => {}} show={true} botId={companionId} />
+											</Dialog>
+										</div>
+									}
+									description="Dump your entire knowledge base here and it will be structured into small chunks and served as context to the bot via vector search."
+								/>
+							</div>
+						</TabsContent>
+						<TabsContent value="functions">
+							<div className="flex justify-between gap-4 mt-5">
+								<WebpageContentToolCard control={form.control} name="functionUrlSummarizer" />
+								<SummarizerSearch control={form.control} name="functionSearchSummarizer" />
+							</div>
+						</TabsContent>
+					</Tabs>
+					<p className="mt-5 text-sm text-red-400">{generalError}</p>
+					<div className="flex justify-end mt-10 space-x-5">
+						{!isNewCompanion && (
+							<Button
+								className="cursor-pointer"
+								variant="destructive"
+								disabled={formSubmitting}
+								type="button"
+								onClick={onDelete}
+							>
+								Delete
+							</Button>
+						)}
+						<ButtonSubmit
+							label={isNewCompanion ? 'Submit' : 'Update'}
+							pulse={!!isFormDirty}
+							onClick={form.handleSubmit(onSubmit)}
+							disabled={formSubmitting || showFormSuccess}
+							isSubmitting={formSubmitting}
+							success={showFormSuccess}
+						/>
+					</div>
+				</form>
+			</Form>
+		</>
+	);
+}
+
+export default CompanionFormPage;

@@ -17,12 +17,14 @@ interface SelectProps<T extends FieldValues> {
 	control: Control<T>;
 	name: Path<T>;
 	data: LabelValueObject[];
+	className?: string;
 	label?: string;
 	description?: string;
 	placeholder?: string;
 }
 
 const Select = <T extends FieldValues>({
+	className,
 	control,
 	name,
 	label,
@@ -36,7 +38,7 @@ const Select = <T extends FieldValues>({
 			name={name}
 			render={({ field }) => {
 				return (
-					<FormItem>
+					<FormItem className={className}>
 						<FormLabel>{label}</FormLabel>
 						<FormControl>
 							<SelectComponent
@@ -45,7 +47,7 @@ const Select = <T extends FieldValues>({
 									if (e) field.onChange(e);
 								}}
 							>
-								<SelectTrigger className="w-full max-w-3xl">
+								<SelectTrigger className="w-full">
 									<SelectValue
 										placeholder={
 											data.length ? (

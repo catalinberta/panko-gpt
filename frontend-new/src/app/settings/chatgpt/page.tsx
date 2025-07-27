@@ -57,7 +57,7 @@ function ChatgptSettingsPage() {
 
 	return (
 		<>
-			<h2 className="text-lg font-semibold leading-none tracking-tight mt-5">ChatGPT Settings</h2>
+			<h2 className="text-lg font-semibold leading-none tracking-tight mt-5">ChatGPT</h2>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-5">
 					<TextInput

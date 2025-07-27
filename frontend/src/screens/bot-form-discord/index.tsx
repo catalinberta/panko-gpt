@@ -15,27 +15,26 @@ import KnowledgebaseModal from '../../components/_modals/KnowledgebaseModal';
 import ButtonSubmit from '@components/button-submit';
 import SummarizerSearch from '@components/_functions/search-summarizer';
 
-const schema = z.object({
-	enabled: z.boolean(),
-	botName: z.string().min(1, 'This field is required'),
-	internalName: z.string(),
-	botStatusText: z.string(),
-	openAiKey: z.string().min(1, 'This field is required'),
-	chatGptModel: z.string().min(1, 'This field is required'),
-	customChatGptModel: z.boolean(),
-	botKey: z.string().min(1, 'This field is required'),
-	context: z.string().min(1, 'This field is required'),
-	knowledgebase: z.string(),
-	functionUrlSummarizer: z.boolean(),
-	functionSearchSummarizer: z.boolean(),
-	functionSearchSummarizerKey: z.string()
-}).refine(
-  (data) => !data.functionSearchSummarizer || data.functionSearchSummarizerKey.trim() !== '',
-  {
-	message: 'The Brave Search API Key is required to enable Search Summarizer.',
-	path: ['functionSearchSummarizerKey'],
-  }
-);
+const schema = z
+	.object({
+		enabled: z.boolean(),
+		botName: z.string().min(1, 'This field is required'),
+		internalName: z.string(),
+		botStatusText: z.string(),
+		openAiKey: z.string().min(1, 'This field is required'),
+		chatGptModel: z.string().min(1, 'This field is required'),
+		customChatGptModel: z.boolean(),
+		botKey: z.string().min(1, 'This field is required'),
+		context: z.string().min(1, 'This field is required'),
+		knowledgebase: z.string(),
+		functionUrlSummarizer: z.boolean(),
+		functionSearchSummarizer: z.boolean(),
+		functionSearchSummarizerKey: z.string()
+	})
+	.refine(data => !data.functionSearchSummarizer || data.functionSearchSummarizerKey.trim() !== '', {
+		message: 'The Brave Search API Key is required to enable Search Summarizer.',
+		path: ['functionSearchSummarizerKey']
+	});
 
 type FormFields = z.infer<typeof schema>;
 
@@ -114,11 +113,11 @@ const DiscordBotForm: React.FC = () => {
 				url: `/discord-bot-form/${botId}/vector-search`,
 				isActive: formStepParam === 'vector-search',
 				disabled: isNewForm ? 'First create the bot to enable this section' : false,
-				tooltip: isNewForm && (
+				tooltip: (isNewForm && (
 					<span className="tooltip -left-10 px-4 py-2 text-sm rounded shadow-lg p-1 gray-100 bg-black -mt-7">
 						To enable this section, first create the bot.
 					</span>
-				) || <></>
+				)) || <></>
 			},
 			{
 				value: 'functions',
@@ -551,7 +550,10 @@ const DiscordBotForm: React.FC = () => {
 								control={control as unknown as Control<FieldValues>}
 								name="functionUrlSummarizer"
 							/>
-							<SummarizerSearch control={control as unknown as Control<FieldValues>} name="functionSearchSummarizer" />
+							<SummarizerSearch
+								control={control as unknown as Control<FieldValues>}
+								name="functionSearchSummarizer"
+							/>
 						</div>
 					)}
 

@@ -3,7 +3,7 @@ import apiClient from '@/services/api'; // your axios wrapper or fetch util
 import ApiPaths from '@/constants/ApiPaths';
 
 export const fetchChatGptModels = async (): Promise<string[]> => {
-	const { data } = await apiClient.get<string[]>(ApiPaths.ChatgptModels); // or your path
+	const { data } = await apiClient.get<string[]>(ApiPaths.ChatgptModels);
 	return data;
 };
 

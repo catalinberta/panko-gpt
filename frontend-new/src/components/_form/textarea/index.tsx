@@ -1,25 +1,28 @@
 'use client';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
 import { Control, FieldValues, Path } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
+import { Textarea as TextareaComponent } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import { ReactElement } from 'react';
 
 interface TextInputProps<T extends FieldValues> {
 	control: Control<T>;
 	name: Path<T>;
 	className?: string;
-	label?: string;
+	componentClassName?: string;
+	label?: string | ReactElement;
 	placeholder?: string;
 	description?: string | ReactElement;
 }
 
-const TextInput = <T extends FieldValues>({
-	className,
+const Textarea = <T extends FieldValues>({
 	control,
 	name,
 	label,
 	description,
-	placeholder = ''
+	placeholder = '',
+	className,
+	componentClassName
 }: TextInputProps<T>) => {
 	return (
 		<FormField
@@ -29,7 +32,11 @@ const TextInput = <T extends FieldValues>({
 				<FormItem className={className}>
 					<FormLabel>{label}</FormLabel>
 					<FormControl>
-						<Input placeholder={placeholder} {...field} />
+						<TextareaComponent
+							placeholder={placeholder}
+							className={cn('h-30', componentClassName)}
+							{...field}
+						/>
 					</FormControl>
 					<FormDescription>{description}</FormDescription>
 					<FormMessage />
@@ -39,4 +46,4 @@ const TextInput = <T extends FieldValues>({
 	);
 };
 
-export default TextInput;
+export default Textarea;

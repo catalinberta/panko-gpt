@@ -21,15 +21,12 @@ export const metadata: Metadata = {
 };
 
 import { AppSidebar } from '@/components/app-sidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Separator } from '@radix-ui/react-separator';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { ReactQuery } from './react-query';
 import AppLoader from '@/app/app-loader';
 import { Suspense } from 'react';
 import PageLoader from '@/components/page-loader';
-import Breadcrumbs from '@/components/breadcrumb';
-import { PlusIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Header from '@/components/header';
 
 export default function RootLayout({
 	children
@@ -39,23 +36,13 @@ export default function RootLayout({
 	return (
 		<ReactQuery>
 			<html lang="en">
-				<body className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}>
-					<SidebarProvider>
+				<body
+					className={`${geistSans.variable} ${geistMono.variable} dark antialiased selection:bg-primary selection:text-primary-foreground flex flex-col items-center`}
+				>
+					<SidebarProvider className="max-w-7xl">
 						<AppSidebar />
 						<SidebarInset>
-							<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-								<div className="flex flex-1 items-center gap-2 px-4">
-									<SidebarTrigger className="-ml-1" />
-									<Separator
-										orientation="vertical"
-										className="mr-2 data-[orientation=vertical]:h-4"
-									/>
-									<Breadcrumbs />
-									<Button size="icon" className="size-8 cursor-pointer">
-										<PlusIcon />
-									</Button>
-								</div>
-							</header>
+							<Header />
 							<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
 								<Suspense fallback={<PageLoader />}>
 									<AppLoader>{children}</AppLoader>

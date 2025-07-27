@@ -3,7 +3,10 @@ enum RoutePaths {
 	Settings = 'settings',
 	SettingsChatgpt = 'settings/chatgpt',
 	SettingsVectorSearch = 'settings/vector-search',
-	SettingsSystem = 'settings/system'
+	SettingsSystem = 'settings/system',
+	Companions = 'companions',
+	CompanionsCreate = 'companions/create',
+	CompanionsDiscord = 'companions/discord'
 }
 
 export default RoutePaths;
