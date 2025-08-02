@@ -12,7 +12,8 @@ services:
             - MONGO_DB_NAME=
             - GLOBAL_OPEN_AI_KEY=
         ports:
-            - '5002:5002'
+            - '5004:5004'
+            - '5005:5005'
     development:
         container_name: pankogpt-dev
         build:
@@ -20,7 +21,7 @@ services:
         image: panko-gpt-dev
         environment:
             - NODE_ENV=development
-            - API_URL=http://localhost:5002
+            - API_URL=http://localhost:5004
             - MONGO_ATLAS_PUBLIC_KEY=
             - MONGO_ATLAS_PRIVATE_KEY=
             - MONGO_ATLAS_PROJECT_ID=
@@ -32,5 +33,5 @@ services:
             - './backend/src:/usr/src/backend/src'
             - './frontend/src:/usr/src/frontend/src'
         ports:
-            - '5002:5002'
-            - '5003:5003'
+            - '5004:5004'
+            - '5005:5005'

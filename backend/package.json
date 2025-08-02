@@ -57,7 +57,7 @@
 		"telegraf": "^4.16.3",
 		"typescript": "5.5.4",
 		"uuid": "^9.0.1",
-		"whatsapp-web.js": "^1.31.0",
+		"whatsapp-web.js": "^1.31",
 		"winston": "^3.17.0",
 		"winston-daily-rotate-file": "^5.0.0",
 		"zod": "^3.23.8"

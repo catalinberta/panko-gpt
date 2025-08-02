@@ -48,7 +48,7 @@ process.on('unhandledRejection', (reason: Error, promise) => {
 });
 
 const server = http.createServer(app);
-const serverPort = 5002;
+const serverPort = 5004;
 
 server.listen(serverPort, () => {
 	logger.info(`API running on http://localhost:${serverPort}`);

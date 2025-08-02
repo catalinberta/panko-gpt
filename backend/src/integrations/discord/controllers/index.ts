@@ -55,7 +55,6 @@ export const createDiscordConfigController = async (req: Request, res: Response)
 export const updateDiscordConfigController = async (req: Request, res: Response) => {
 	try {
 		let config = await updateDiscordConfigById(req.params.id, req.body);
-		console.log(2, config);
 		let clientId = null;
 		if (config) {
 			clientId = await getDiscordClientId(config);
