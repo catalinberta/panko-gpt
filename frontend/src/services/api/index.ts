@@ -43,7 +43,7 @@ class HttpClient {
 		return this.instance.delete<T>(url, config);
 	}
 }
-const apiUrl = import.meta.env.VITE_API_URL || document.location.origin;
+const apiUrl = 'http://localhost:5004'; // || document.location.origin;
 const apiClient = new HttpClient(apiUrl);
 
 export default apiClient;
