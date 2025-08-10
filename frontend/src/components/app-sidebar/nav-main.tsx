@@ -18,6 +18,7 @@ import { Bot, ChevronRight, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent } from '../ui/collapsible';
+import { useEffect, useState } from 'react';
 
 const CompanionsMenu = [
 	{
@@ -58,15 +59,33 @@ const SettingsMenu = [
 export function NavMain() {
 	const router = useRouter();
 	const pathname = usePathname();
+	const [showCompanionsMenu, setShowCompanionsMenu] = useState(false);
+	const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
 	const isRouteCompanions = pathname === '/' || pathname.startsWith('/companions/');
 	const isRouteSettings = pathname.startsWith('/settings');
+
+	useEffect(() => {
+		setShowCompanionsMenu(isRouteCompanions);
+	}, [isRouteCompanions]);
+
+	useEffect(() => {
+		setShowSettingsMenu(isRouteSettings);
+	}, [isRouteSettings]);
+
+	const toggleCompanionsMenu = () => {
+		setShowCompanionsMenu(!showCompanionsMenu);
+	};
+
+	const toggleSettingsMenu = () => {
+		setShowSettingsMenu(!showSettingsMenu);
+	};
 
 	return (
 		<SidebarGroup>
 			<SidebarGroupLabel>Platform</SidebarGroupLabel>
 			<SidebarMenu>
-				<Collapsible asChild open={isRouteCompanions} defaultOpen={false}>
+				<Collapsible asChild open={showCompanionsMenu} defaultOpen={false}>
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							onClick={() => router.push('/')}
@@ -78,7 +97,10 @@ export function NavMain() {
 							</div>
 						</SidebarMenuButton>
 						<CollapsibleTrigger asChild>
-							<SidebarMenuAction className="data-[state=open]:rotate-90 cursor-pointer">
+							<SidebarMenuAction
+								onClick={toggleCompanionsMenu}
+								className="data-[state=open]:rotate-90 cursor-pointer"
+							>
 								<ChevronRight />
 								<span className="sr-only">Toggle</span>
 							</SidebarMenuAction>
@@ -103,7 +125,7 @@ export function NavMain() {
 						</CollapsibleContent>
 					</SidebarMenuItem>
 				</Collapsible>
-				<Collapsible asChild open={isRouteSettings} defaultOpen={false}>
+				<Collapsible asChild open={showSettingsMenu} defaultOpen={false}>
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							onClick={() => router.push(`/${RoutePaths.SettingsChatgpt}`)}
@@ -114,7 +136,7 @@ export function NavMain() {
 								<span className="truncate  font-medium">Settings</span>
 							</div>
 						</SidebarMenuButton>
-						<CollapsibleTrigger asChild>
+						<CollapsibleTrigger asChild onClick={toggleSettingsMenu}>
 							<SidebarMenuAction className="data-[state=open]:rotate-90 cursor-pointer">
 								<ChevronRight />
 								<span className="sr-only">Toggle</span>

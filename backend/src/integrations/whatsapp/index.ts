@@ -20,7 +20,7 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 	client.on('message', async msg => {
 		const chat = await msg.getChat();
 		const isGroup = chat.isGroup;
-		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
+		const isMentioned = msg.mentionedIds.indexOf(msg.to) > -1;
 		const currentTimestamp = Math.round(Date.now() / 1000);
 		const messageTimestamp = msg.timestamp;
 		const maxAgeInSeconds = 60;

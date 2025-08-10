@@ -1,25 +1,25 @@
 import Select from '@/components/_form/select';
 import Switch from '@/components/_form/switch';
 import DismissibleChips from '@/components/dismissible-chips';
-import { Control, FieldValues, UseFormRegister } from 'react-hook-form';
+import { Control, FieldValues, Path, UseFormRegister } from 'react-hook-form';
 
-interface OnlyContactsFieldProps {
-	control: Control;
+interface OnlyContactsFieldProps<T extends FieldValues> {
+	control: Control<T>;
 	contactsFilterType: string;
 	onlyContacts: boolean;
-	register: UseFormRegister<FieldValues>;
+	register: UseFormRegister<T>;
 }
 
-const OnlyContactsField: React.FC<OnlyContactsFieldProps> = ({
+const OnlyContactsField = <T extends FieldValues>({
 	control,
 	onlyContacts,
 	contactsFilterType,
 	register
-}) => {
+}: OnlyContactsFieldProps<T>) => {
 	return (
 		<>
 			<Switch
-				name="onlyContacts"
+				name={'onlyContacts' as Path<T>}
 				label="Respond only to selected contacts"
 				description="Whether to respond to all unknown numbers or only to selected contacts from the linked device."
 				vertical
@@ -29,7 +29,7 @@ const OnlyContactsField: React.FC<OnlyContactsFieldProps> = ({
 				<>
 					<div className="ml-5 mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 						<Select
-							name="contactsFilterType"
+							name={'contactsFilterType' as Path<T>}
 							label="Select contacts filter"
 							control={control}
 							data={[
@@ -51,7 +51,7 @@ const OnlyContactsField: React.FC<OnlyContactsFieldProps> = ({
 					{contactsFilterType === 'whitelist' && (
 						<div className="ml-5 mt-5">
 							<DismissibleChips
-								name="contactsWhitelist"
+								name={'contactsWhitelist' as Path<T>}
 								label="Whitelist"
 								placeholder="Add number"
 								control={control}
@@ -62,7 +62,7 @@ const OnlyContactsField: React.FC<OnlyContactsFieldProps> = ({
 					{contactsFilterType === 'blacklist' && (
 						<div className="ml-5 mt-5">
 							<DismissibleChips
-								name="contactsBlacklist"
+								name={'contactsBlacklist' as Path<T>}
 								label="Blacklist"
 								placeholder="Add number"
 								control={control}

@@ -43,7 +43,7 @@ class HttpClient {
 		return this.instance.delete<T>(url, config);
 	}
 }
-const apiUrl = 'http://localhost:5004'; // || document.location.origin;
-const apiClient = new HttpClient(apiUrl);
+const baseURL = typeof window === 'undefined' ? process.env.INTERNAL_API_URL : process.env.NEXT_PUBLIC_API_URL;
+const apiClient = new HttpClient(baseURL!);
 
 export default apiClient;

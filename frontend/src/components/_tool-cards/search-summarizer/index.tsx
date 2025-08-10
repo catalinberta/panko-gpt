@@ -19,7 +19,7 @@ const SummarizerSearch = <T extends FieldValues>(props: SummarizerSearchProps<T>
 				</CardAction>
 			</CardHeader>
 			<CardContent>
-				<TextInput control={props.control} name="functionSearchSummarizerKey" label="API Key" />
+				<TextInput control={props.control} name={'functionSearchSummarizerKey' as Path<T>} label="API Key" />
 			</CardContent>
 		</Card>
 	);

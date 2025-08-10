@@ -16,7 +16,9 @@ export const metadata: Metadata = {
 	title: 'Panko',
 	description: 'Self-hosted AI Companions',
 	icons: {
-		icon: '/logo.png'
+		icon: [{ url: '/logo.png', type: 'image/png' }],
+		shortcut: [{ url: '/logo.png', type: 'image/png' }],
+		apple: [{ url: '/logo.png', type: 'image/png' }]
 	}
 };
 
@@ -36,6 +38,9 @@ export default function RootLayout({
 	return (
 		<ReactQuery>
 			<html lang="en">
+				<head>
+					<link rel="icon" href="/logo.png" type="image/png" />
+				</head>
 				<body
 					className={`${geistSans.variable} ${geistMono.variable} dark antialiased selection:bg-primary selection:text-primary-foreground flex flex-col items-center`}
 				>
