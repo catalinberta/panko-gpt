@@ -72,7 +72,14 @@ export const createWhatsappClient = async (config: WhatsappBotConfig): Promise<C
 	const client = new Client({
 		takeoverOnConflict: true,
 		puppeteer: {
-			args: ['--no-sandbox']
+			args: [
+				'--no-sandbox',
+				'--disable-dev-shm-usage',
+				'--disable-setuid-sandbox',
+				'--disable-gpu=False',
+				'--enable-webgl',
+				'--user-data-dir=/tmp/chrome-user-data'
+			]
 		},
 		authStrategy: new LocalAuth({
 			clientId: config._id,

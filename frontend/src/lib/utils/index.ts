@@ -38,3 +38,10 @@ export const validatePhoneNumber = (phoneNumber: string) => {
 	const phoneNumberRegex = /^\+(?:[0-9] ?){6,14}[0-9]$/;
 	return phoneNumberRegex.test(phoneNumber);
 };
+
+export function getApiUrl(): string {
+	if (typeof window !== 'undefined' && window.__ENV__) {
+		return window.__ENV__.API_URL!;
+	}
+	return process.env.API_URL || 'http://localhost:5004';
+}

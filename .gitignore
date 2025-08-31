@@ -134,7 +134,5 @@ dist/
 /.idea/
 *.code-workspace
 keys
-docker-compose.yml
-docker-compose.dev.yml
 volumes
 backend/data

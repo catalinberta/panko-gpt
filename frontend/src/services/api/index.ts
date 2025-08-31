@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/utils';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 class HttpClient {
@@ -43,7 +44,10 @@ class HttpClient {
 		return this.instance.delete<T>(url, config);
 	}
 }
-const baseURL = typeof window === 'undefined' ? process.env.INTERNAL_API_URL : process.env.NEXT_PUBLIC_API_URL;
-const apiClient = new HttpClient(baseURL!);
+let baseURL = getApiUrl();
+if (typeof window === 'undefined') {
+	baseURL = 'http://localhost:5004';
+}
+const apiClient = new HttpClient(baseURL);
 
 export default apiClient;

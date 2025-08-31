@@ -1,9 +1,9 @@
 {
 	"name": "panko-gpt-frontend",
-	"version": "1.0.0",
+	"version": "1.0.0-alpha",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbopack -p 5005",
+		"dev": "next dev --turbopack",
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",

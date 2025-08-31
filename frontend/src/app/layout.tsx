@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -29,6 +30,7 @@ import AppLoader from '@/app/app-loader';
 import { Suspense } from 'react';
 import PageLoader from '@/components/page-loader';
 import Header from '@/components/header';
+import Script from 'next/script';
 
 export default function RootLayout({
 	children
@@ -40,6 +42,7 @@ export default function RootLayout({
 			<html lang="en">
 				<head>
 					<link rel="icon" href="/logo.png" type="image/png" />
+					<Script src="/env-config.js" strategy="beforeInteractive" />
 				</head>
 				<body
 					className={`${geistSans.variable} ${geistMono.variable} dark antialiased selection:bg-primary selection:text-primary-foreground flex flex-col items-center`}

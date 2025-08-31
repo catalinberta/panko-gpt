@@ -1,0 +1,40 @@
+services:
+    production:
+        container_name: pankogpt-prod
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                NODE_ENV: production
+        image: catalinbertadev/panko-gpt:1.0.0-alpha
+        platform: linux/amd64
+        environment:
+            NODE_ENV: production
+            API_URL: http://localhost:5004
+        env_file:
+            - .env
+        ports:
+            - '5005:5005'
+            - '5004:5004'
+
+    development:
+        container_name: pankogpt-dev
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+            args:
+                NODE_ENV: development
+        image: panko-gpt-dev
+        platform: linux/amd64
+        environment:
+            NODE_ENV: development
+            API_URL: http://localhost:5004
+        env_file:
+            - .env.dev
+        ports:
+            - '5005:5005'
+            - '5004:5004'
+        volumes:
+            - './backend/data:/usr/src/app/backend/data'
+            - './backend/src:/usr/src/app/backend/src'
+            - './frontend/src:/usr/src/app/frontend/src'

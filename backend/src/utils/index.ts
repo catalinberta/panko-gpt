@@ -41,7 +41,15 @@ export const sendDiscordMessage = async (
 
 export const getWebPageContentFromUrl = async (url: string) => {
 	const browser = await puppeteer.launch({
-		args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu=False', '--enable-webgl'],
+		executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+		args: [
+			'--no-sandbox',
+			'--disable-dev-shm-usage',
+			'--disable-setuid-sandbox',
+			'--disable-gpu=False',
+			'--enable-webgl',
+			'--user-data-dir=/tmp/chrome-user-data'
+		],
 		headless: true,
 		timeout: 10_000,
 		protocolTimeout: 20_000
