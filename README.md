@@ -77,23 +77,23 @@ To install and run the application locally, follow these steps:
     cd panko-gpt
     ```
 
-3. Rename `docker-compose.example.yml` to `docker-compose.yml`
+3. Rename `.env.example` to `.env`
 
-4. Rename `docker-compose.dev.example.yml` to `docker-compose.dev.yml`
+4. Rename `.env.dev.example` to `.env.dev`
 
-5. Fill in the missing environment variables (e.g. Atlas credentials, OpenAI key etc.) in `docker-compose.yml`.
+5. Fill in the missing environment variables (e.g. Atlas credentials, OpenAI key etc.) in `.env` and `.env.dev`.
 
 ### ![For Development](https://img.shields.io/badge/For%20Development-FF5733?logo=visual-studio-code&logoColor=white) For Development
 
 1. Build the development environment:
 
     ```bash
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+    docker compose build development
     ```
 
 2. Start the development environment:
     ```bash
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+    docker compose up development
     ```
 
 ### ![For Production](https://img.shields.io/badge/For%20Production-28A745?logo=heroku&logoColor=white) For Production
@@ -101,12 +101,12 @@ To install and run the application locally, follow these steps:
 1. Build the production environment:
 
     ```bash
-    docker compose -f docker-compose.yml build
+    docker compose build production
     ```
 
 2. Start the production environment:
     ```bash
-    docker compose -f docker-compose.yml up
+    docker compose up production
     ```
 
 ### ![Running the Application](https://img.shields.io/badge/Running%20the%20Application-3498DB?logo=server&logoColor=white) Running the Application
