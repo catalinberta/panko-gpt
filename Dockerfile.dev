@@ -1,0 +1,28 @@
+FROM node:21-alpine
+
+RUN apk add --no-cache dumb-init chromium nss freetype freetype-dev harfbuzz ca-certificates ttf-freefont udev
+
+WORKDIR /usr/src/app
+
+WORKDIR /usr/src/app/frontend
+COPY ./frontend .
+RUN npm install
+
+WORKDIR /usr/src/app/backend
+COPY ./backend .
+RUN npm install
+
+WORKDIR /usr/src/app
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV NODE_ENV=development
+ENV PORT 5005
+
+COPY ./docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+EXPOSE 5004 5005
+
+CMD dumb-init sh -c "\
+  cd backend && npm run dev & \
+  cd frontend && npm run dev"

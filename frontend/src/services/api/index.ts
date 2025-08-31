@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/utils';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 class HttpClient {
@@ -43,7 +44,10 @@ class HttpClient {
 		return this.instance.delete<T>(url, config);
 	}
 }
-const apiUrl = import.meta.env.VITE_API_URL || document.location.origin;
-const apiClient = new HttpClient(apiUrl);
+let baseURL = getApiUrl();
+if (typeof window === 'undefined') {
+	baseURL = 'http://localhost:5004';
+}
+const apiClient = new HttpClient(baseURL);
 
 export default apiClient;

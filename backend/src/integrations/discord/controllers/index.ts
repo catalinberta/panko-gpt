@@ -15,7 +15,7 @@ export const getDiscordConfigsController = async (req: Request, res: Response) =
 		return res.json(discordConfigs);
 	} catch (error) {
 		logger.error(error);
-		return res.sendStatus(400);
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
 	}
 };
 
@@ -25,7 +25,7 @@ export const getDiscordConfigByIdController = async (req: Request, res: Response
 		return res.json(discordConfig);
 	} catch (error) {
 		logger.error(error);
-		return res.sendStatus(400);
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
 	}
 };
 
@@ -48,13 +48,23 @@ export const createDiscordConfigController = async (req: Request, res: Response)
 		return res.json(discordConfig);
 	} catch (error) {
 		logger.error(error);
-		return res.sendStatus(400);
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
 	}
 };
 
 export const updateDiscordConfigController = async (req: Request, res: Response) => {
 	try {
-		const config = await updateDiscordConfigById(req.params.id, req.body);
+		let config = await updateDiscordConfigById(req.params.id, req.body);
+		let clientId = null;
+		if (config) {
+			clientId = await getDiscordClientId(config);
+			if (clientId) {
+				const newDiscordConfig = await updateDiscordConfigById(config._id, { clientId });
+				if (newDiscordConfig) {
+					config = newDiscordConfig;
+				}
+			}
+		}
 		if (req.body.enabled) {
 			await restartDiscordClient(req.params.id);
 		} else {
@@ -63,7 +73,7 @@ export const updateDiscordConfigController = async (req: Request, res: Response)
 		return res.json(config);
 	} catch (error) {
 		logger.error(error);
-		return res.sendStatus(400);
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
 	}
 };
 
@@ -74,6 +84,6 @@ export const deleteDiscordConfigByIdController = async (req: Request, res: Respo
 		return res.json(discordConfig);
 	} catch (error) {
 		logger.error(error);
-		return res.sendStatus(400);
+		return res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
 	}
 };

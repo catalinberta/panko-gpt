@@ -20,7 +20,7 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 	client.on('message', async msg => {
 		const chat = await msg.getChat();
 		const isGroup = chat.isGroup;
-		const isMentioned = msg.mentionedIds.indexOf(msg.to as unknown as ChatId) > -1;
+		const isMentioned = msg.mentionedIds.indexOf(msg.to) > -1;
 		const currentTimestamp = Math.round(Date.now() / 1000);
 		const messageTimestamp = msg.timestamp;
 		const maxAgeInSeconds = 60;
@@ -72,7 +72,14 @@ export const createWhatsappClient = async (config: WhatsappBotConfig): Promise<C
 	const client = new Client({
 		takeoverOnConflict: true,
 		puppeteer: {
-			args: ['--no-sandbox']
+			args: [
+				'--no-sandbox',
+				'--disable-dev-shm-usage',
+				'--disable-setuid-sandbox',
+				'--disable-gpu=False',
+				'--enable-webgl',
+				'--user-data-dir=/tmp/chrome-user-data'
+			]
 		},
 		authStrategy: new LocalAuth({
 			clientId: config._id,

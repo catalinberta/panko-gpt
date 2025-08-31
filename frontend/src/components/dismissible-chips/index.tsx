@@ -1,4 +1,4 @@
-import { validatePhoneNumber } from '@utils/index';
+import { validatePhoneNumber } from '@/lib/utils';
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from 'react';
 import { Control, FieldError, FieldValues, Path, useController, UseFormRegister } from 'react-hook-form';
 
@@ -72,14 +72,14 @@ const DismissibleChips = <P extends FieldValues>(props: DismissibleChipsProps<P>
 						onKeyDown={onKeyDown}
 						onChange={onChange}
 						value={value}
-						className="block flex-1 rounded-md bg-gray-300 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-yellow-300 sm:text-sm sm:leading-6"
+						className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
 					/>
 					<button
 						type="button"
 						disabled={!value}
 						className={`ml-5 rounded-md ${
-							value ? 'bg-green-300' : 'bg-gray-300 opacity-50'
-						}  disabled:bg-gray-200 px-10 py-2 text-sm font-semibold text-gray-900 shadow-sm ${
+							value ? 'bg-[var(--tertiary)]' : 'bg-gray-300 opacity-50'
+						}  disabled:bg-gray-200 px-10 py-2 text-sm font-semibold text-[var(--tertiary-foreground)] cursor-pointer shadow-sm ${
 							value ? 'hover:bg-green-200' : ''
 						} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 `}
 						onClick={() => value && onAdd()}
@@ -106,7 +106,7 @@ const Chip = (props: { value: string; onRemove: (value: string) => void }) => {
 			</svg>
 			<span>{props.value}</span>
 			<button
-				className="ml-2 flex items-center justify-center transition-all p-1 rounded-md text-white hover:bg-white/10 active:bg-white/10"
+				className="ml-2 cursor-pointer flex items-center justify-center transition-all p-1 rounded-md text-white hover:bg-white/10 active:bg-white/10"
 				type="button"
 				onClick={props.onRemove.bind(null, props.value)}
 			>

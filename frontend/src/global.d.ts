@@ -3,4 +3,12 @@ export interface LabelValueObject {
 	value: string;
 }
 
-export type BotConfig = DiscordBotConfig | TelegramBotConfig | WhatsappBotConfig;
+export type CompanionConfig = DiscordBotConfig | TelegramBotConfig | WhatsappBotConfig;
+
+declare global {
+	interface Window {
+		__ENV__?: {
+			API_URL?: string;
+		};
+	}
+}

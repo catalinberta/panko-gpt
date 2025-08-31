@@ -1,9 +1,14 @@
 enum RoutePaths {
-	Home = '/',
-	Settings = '/settings',
-	Integrations = '/integrations',
-	DiscordBotForm = '/discord-bot-form',
-	TelegramBotForm = '/telegram-bot-form',
-	WhatsappBotForm = '/whatsapp-bot-form'
+	Dashboard = '',
+	Settings = 'settings',
+	SettingsChatgpt = 'settings/chatgpt',
+	SettingsVectorSearch = 'settings/vector-search',
+	SettingsSystem = 'settings/system',
+	Companions = 'companions',
+	CompanionsCreate = 'companions/create',
+	CompanionsDiscord = 'companions/discord',
+	CompanionsTelegram = 'companions/telegram',
+	CompanionsWhatsApp = 'companions/whatsapp'
 }
+
 export default RoutePaths;
