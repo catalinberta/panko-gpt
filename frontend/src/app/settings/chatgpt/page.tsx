@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Form } from '@/components/ui/form'; // ✅ Correct: use your UI wrapper
+import { Form } from '@/components/ui/form';
 import { Settings } from '@/services/api/types';
 import { z } from 'zod';
 import ApiPaths from '@/constants/ApiPaths';

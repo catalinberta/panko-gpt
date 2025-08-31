@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import apiClient from '@/services/api'; // your axios wrapper or fetch util
+import apiClient from '@/services/api';
 import ApiPaths from '@/constants/ApiPaths';
 
 export const fetchChatGptModels = async (): Promise<string[]> => {
