@@ -41,7 +41,7 @@ const createOnMessageHandler = (config: WhatsappBotConfig, client: Client) => {
 
 		let gptResponse;
 		try {
-			gptResponse = await queryGPT(config, userMessage, msg.from);
+			gptResponse = await queryGPT(config, { message: userMessage }, msg.from);
 		} catch (e) {
 			logger.error(e);
 			msg.reply('Ewps, error from chatgpt api :pleading_face:');

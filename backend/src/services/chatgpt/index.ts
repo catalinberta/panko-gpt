@@ -1,15 +1,21 @@
 import 'dotenv/config';
-import { countGptTokens, extractArrayFromGptChunks, getKnowledebaseContext, sleep } from '../../utils';
+import {
+	countGptTokens,
+	extractArrayFromGptChunks,
+	getKnowledebaseContext,
+	getLanguageFromText,
+	sleep
+} from '../../utils';
 import { chatGptDefaults } from '../../constants';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { BotConfig } from '../../global';
+import { BotConfig, MessageWithContext } from '../../global';
 import {
 	SystemMessage,
 	AIMessage,
 	HumanMessage,
 	AIMessageChunk,
 	MessageContent,
-	BaseMessageLike
+	ToolMessage
 } from '@langchain/core/messages';
 import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
 import summarizeWebpageUrlTool from './tools/webpageContent';
@@ -17,8 +23,14 @@ import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import searchSummarizerTool from './tools/searchSummarizer';
 import logger from '../logger';
-import searchImageTool from './tools/imageSearch';
 import { ReactionEmoji } from 'discord.js';
+import {
+	addReminderTool,
+	getAllRemindersTool,
+	getReminderByIdTool,
+	removeReminderTool,
+	updateReminderTool
+} from './tools/reminder';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -40,7 +52,7 @@ type QueryGptResult = {
 
 export const queryGPT = async (
 	config: BotConfig,
-	userMessage: string,
+	userMessage: MessageWithContext,
 	conversationId: string,
 	customTools?: DynamicStructuredTool<any>[] | DynamicTool[] | undefined,
 	customToolsByName?: {
@@ -50,7 +62,8 @@ export const queryGPT = async (
 		system?: SystemMessage[];
 		assistant?: AIMessage[];
 		user?: HumanMessage[];
-	}
+	},
+	disableTools?: boolean
 ): Promise<QueryGptResult> => {
 	const gptModel = config.chatGptModel || chatGptDefaults.model;
 
@@ -63,24 +76,42 @@ export const queryGPT = async (
 
 	const initializedSummarizeWebpageUrlTool = summarizeWebpageUrlTool(config.openAiKey);
 	const initializedSearchSummarizerTool = searchSummarizerTool(config.functionSearchSummarizerKey);
+	const initializedGetAllRemindersTool = getAllRemindersTool();
+	const initializedAddReminderTool = addReminderTool(config._id);
+	const initializedUpdateReminderTool = updateReminderTool();
+	const initializedGetReminderByIdTool = getReminderByIdTool();
+	const initializedRemoveReminderByIdTool = removeReminderTool();
 
 	const toolsByName: {
 		[key: string]: DynamicTool | DynamicStructuredTool<any>;
 	} = {
 		searchSummarizer: initializedSearchSummarizerTool,
-		summarizeWebpageUrl: initializedSummarizeWebpageUrlTool
+		summarizeWebpageUrl: initializedSummarizeWebpageUrlTool,
+		getAllReminders: initializedGetAllRemindersTool,
+		addReminder: initializedAddReminderTool,
+		updateReminder: initializedUpdateReminderTool,
+		getReminderById: initializedGetReminderByIdTool,
+		removeReminder: initializedRemoveReminderByIdTool
 	};
 	const messages = [];
 
 	const tools = [];
-	config.functionSearchSummarizer && tools.push(initializedSearchSummarizerTool);
-	config.functionSearchSummarizer &&
-		messages.push(
-			new SystemMessage(
-				'Do not generate image urls yourself. You can use searchSummarizer tool to also look for images to enrich responses.'
-			)
-		);
-	config.functionUrlSummarizer && tools.push(initializedSummarizeWebpageUrlTool);
+
+	if (!disableTools) {
+		config.functionSearchSummarizer && tools.push(initializedSearchSummarizerTool);
+		config.functionSearchSummarizer &&
+			messages.push(
+				new SystemMessage(
+					'Do not generate image urls yourself. You can use searchSummarizer tool to also look for images to enrich responses.'
+				)
+			);
+		config.functionUrlSummarizer && tools.push(initializedSummarizeWebpageUrlTool);
+		config.functionReminders && tools.push(initializedGetAllRemindersTool);
+		config.functionReminders && tools.push(initializedGetReminderByIdTool);
+		config.functionReminders && tools.push(initializedAddReminderTool);
+		config.functionReminders && tools.push(initializedUpdateReminderTool);
+		config.functionReminders && tools.push(initializedRemoveReminderByIdTool);
+	}
 
 	if (customTools && customTools.length) {
 		tools.push(...customTools);
@@ -92,11 +123,11 @@ export const queryGPT = async (
 
 	const modelWithTools = model.bindTools(tools);
 
-	messages.push(new SystemMessage(`Current time: ${String(new Date())}`));
+	messages.push(new SystemMessage(`Current system time: ${String(new Date())}`));
 	config.context && messages.push(new SystemMessage(config.context));
 
 	if (config.knowledgebase) {
-		const knowledgebase = await getKnowledebaseContext(userMessage, config);
+		const knowledgebase = await getKnowledebaseContext(userMessage.message, config);
 		knowledgebase && messages.push(knowledgebase);
 	}
 
@@ -112,34 +143,92 @@ export const queryGPT = async (
 			}
 		});
 	}
-	messages.push(new SystemMessage('Answer in the same language as the following user message'));
-	messages.push(new HumanMessage(userMessage));
+	userMessage.context && messages.push(new SystemMessage('Message context: ' + userMessage.context));
+	messages.push(new HumanMessage(userMessage.message));
+
+	if (config.functionLanguageDetection) {
+		const userLanguage = getLanguageFromText(userMessage.message, config.functionLanguageDetectionWhitelist);
+		if (userLanguage) {
+			logger.debug('User language:', userLanguage);
+			messages.push(
+				new SystemMessage(`User's last message was in ${userLanguage}, please answer in ${userLanguage}`)
+			);
+		}
+	}
 
 	customPrompt && customPrompt.system && messages.push(...customPrompt.system);
 	customPrompt && customPrompt.assistant && messages.push(...customPrompt.assistant);
 	customPrompt && customPrompt.user && messages.push(...customPrompt.user);
 
-	logger.silly(`llm messages: ${messages}`);
+	logger.silly(`LLM messages: ${JSON.stringify(messages)}`);
 
-	let aiResponse: AIMessageChunk = await modelWithTools.invoke(messages);
+	let aiResponse: AIMessageChunk;
 	const toolMessages: string[] = [];
-	if (aiResponse.tool_calls && aiResponse.tool_calls.length) {
-		messages.push(aiResponse);
-		for (const toolCall of aiResponse.tool_calls) {
-			logger.silly(`Using llm tool: ${toolCall.name}`);
-			const selectedTool = toolsByName[toolCall.name];
-			const toolMessage = await selectedTool.invoke(toolCall);
-			logger.silly(`Tool response: ${JSON.stringify(toolMessage, null, 2)}`);
-			messages.push(toolMessage);
-			toolMessages.push(String(toolMessage.content));
-		}
+	const maxIterations = 5;
+	let iterations = 0;
+
+	while (true) {
 		aiResponse = await modelWithTools.invoke(messages);
+		if (!aiResponse.tool_calls || aiResponse.tool_calls.length === 0) {
+			break;
+		}
+
+		if (iterations >= maxIterations) {
+			logger.warn(`Reached max tool iterations (${maxIterations}). Asking model to finalize.`);
+			messages.push(
+				new SystemMessage(
+					`Reached max tool iterations (${maxIterations}). Please produce the best possible final answer using the information gathered so far.`
+				)
+			);
+			aiResponse = await modelWithTools.invoke(messages);
+			break;
+		}
+
+		messages.push(aiResponse);
+
+		for (const toolCall of aiResponse.tool_calls) {
+			logger.silly(`Using LLM tool: ${toolCall.name}`);
+			const selectedTool = toolsByName[toolCall.name];
+			if (!selectedTool) {
+				const note = `Requested tool "${toolCall.name}" is not available.`;
+				logger.warn(note);
+				messages.push(new SystemMessage(note));
+				continue;
+			}
+			try {
+				const toolMessage = await selectedTool.invoke(toolCall);
+				logger.silly(`Tool response: ${JSON.stringify(toolMessage, null, 2)}`);
+				messages.push(toolMessage);
+				const contentStr = Array.isArray((toolMessage as any).content)
+					? (toolMessage as any).content
+							.map((c: any) => (typeof c === 'string' ? c : JSON.stringify(c)))
+							.join('\n')
+					: String((toolMessage as any).content ?? '');
+				toolMessages.push(contentStr);
+			} catch (err: any) {
+				const errMsg = `Tool "${toolCall.name}" failed: ${err?.message || String(err)}`;
+				logger.error(errMsg);
+				const failedToolMessage = new ToolMessage({
+					tool_call_id: toolCall.id!,
+					content: `Error: ${errMsg}`
+				});
+				messages.push(failedToolMessage);
+			}
+		}
+
+		iterations += 1;
 	}
-	const responseContent = Array.isArray(aiResponse.content) ? aiResponse.content.join('\n') : aiResponse.content;
 
-	await setPreviousMessage(config, conversationId, userMessage, responseContent);
+	const responseContent = Array.isArray(aiResponse.content)
+		? aiResponse.content.join('\n')
+		: String(aiResponse.content ?? '');
 
-	logger.silly(`Llm response: ${responseContent}`);
+	await setPreviousMessage(config, conversationId, userMessage.message, responseContent);
+	for (let i = 0; i < toolMessages.length; i++) {
+		await setPreviousMessage(config, conversationId, undefined, toolMessages[i]);
+	}
+
+	logger.silly(`LLM response: ${responseContent}`);
 
 	return {
 		response: responseContent,
@@ -175,19 +264,19 @@ export const getReactionType = async (
 
 	messages.push(
 		new SystemMessage(`
-		- If the user's message is a basic gratitude (e.g., "Thanks!", "Got it", "Cool", "Okay", "Yes", "Understood", "Sure"), return a suitable ${platform} emoji (e.g. 🤗).  
-		- **Do not react if the message is a question, even if it does not end with a question mark.** This includes anything seeking information, explanations, or calculations (e.g., "What's 2+2", "Tell me how this works", "Explain this").  
-		- **Do not react if the user made a request** (e.g., "Send me that file", "Generate a summary", "Give me an example").  
-		- **Do not react if the reply had a question.
-		- **Do not react if the reply had any form of explanation.
-		- Avoid using very common emojis repeatedly. Instead, vary them randomly when appropriate.  
-		- Your only scope is to ensure an emoji is only returned instead of saying welcome to a user's appreciation.
-		- If you are not sure or confident about the decision, return an empty response.
-		- If the AI's reply made sense or clarified anything, return an empty response.  
-		- Do not include any explanations or extra text—only return the ${platform} emoji or an empty response.
+			- If the user's message is a basic gratitude (e.g., "Thanks!", "Got it", "Cool", "Okay", "Yes", "Understood", "Sure"), return a suitable ${platform} emoji (e.g. 🤗).  
+			- **Do not react if the message is a question, even if it does not end with a question mark.** This includes anything seeking information, explanations, or calculations (e.g., "What's 2+2", "Tell me how this works", "Explain this").  
+			- **Do not react if the user made a request** (e.g., "Send me that file", "Generate a summary", "Give me an example").  
+			- **Do not react if the reply had a question.
+			- **Do not react if the reply had any form of explanation.
+			- Avoid using very common emojis repeatedly. Instead, vary them randomly when appropriate.  
+			- Your only scope is to ensure an emoji is only returned instead of saying welcome to a user's appreciation.
+			- If you are not sure or confident about the decision, return an empty response.
+			- If the AI's reply made sense or clarified anything, return an empty response.  
+			- Do not include any explanations or extra text—only return the ${platform} emoji or an empty response.
 
-		Message: User: "${userMessage}" | AI: "${gptAnswer}"  
-	`)
+			Message: User: "${userMessage}" | AI: "${gptAnswer}"  
+		`)
 	);
 
 	const aiResponse = await model.invoke(messages);
@@ -224,14 +313,8 @@ export const getComponents = async (
 				- Messages must also have a top-level "content" field for plain text.
 				- Messages can optionally include a "components" array for interactive elements. Use components only for clear user interaction.
 				- Do not use "embeds" for text content. 
-				
-			Supported Components (within Action Rows, type: 1):
-
-				- "button" (ONLY for links, type: 2): must have "label", "url", style must always be "link" (style: 5). DO NOT use "custom_id" for link buttons. Optional: "emoji" ({ "name", "id"?, "animated"? }), "disabled".
-				- "string_select" (type: 3): requires "custom_id", "placeholder", and "options" (array of { label, value, description?, emoji?, default? }).
 
 			Supported Embed Structure (within the "embeds" array, each object represents one embed):
-
 				- Embed object must have "type": "rich".
 				- Optional properties within an embed object (leverage these for detailed, visually appealing, and well-structured presentation):
 					- "color": integer (decimal color code, e.g., 3447003 for blue). **Choose a color that fits the message tone, theme, or urgency.**
@@ -246,6 +329,7 @@ export const getComponents = async (
 				- The top-level "components" array must contain Action Row objects, NOT nested arrays of arrays.
 				- Max 5 components per Action Row.
 				- Max 5 Action Rows per message.
+				- Max 1 Select/Dropdown per message.
 				- Do NOT use custom component types like "text", "media", "container", or "section" in the final Discord components array. These are internal concepts for structuring the response before conversion.
 
 			Embed Usage Rules:
@@ -278,24 +362,24 @@ export const getComponents = async (
 					]
 					},
 					{
-					"type": 1,
-					"components": [
-						{
-						"type": 3,
-						"custom_id": "example_select",
-						"placeholder": "Choose something...",
-						"options": [
+						"type": 1,
+						"components": [
 							{
-							"label": "Option A",
-							"value": "a"
-							},
-							{
-							"label": "Option B",
-							"value": "b"
+								"type": 3,
+								"custom_id": "component_listing_movies:movie_name_selected",
+								"placeholder": "Choose something...",
+								"options": [
+									{
+										"label": "Option A",
+										"value": "a"
+									},
+									{
+										"label": "Option B",
+										"value": "b"
+									}
+								]
 							}
 						]
-						}
-					]
 					}
 				]
 			}

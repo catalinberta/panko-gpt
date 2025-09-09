@@ -37,7 +37,10 @@ const formSchema = z
 		knowledgebase: z.string(),
 		functionUrlSummarizer: z.boolean(),
 		functionSearchSummarizer: z.boolean(),
-		functionSearchSummarizerKey: z.string()
+		functionSearchSummarizerKey: z.string(),
+		functionReminders: z.boolean(),
+		functionLanguageDetection: z.boolean(),
+		functionLanguageDetectionWhitelist: z.string()
 	})
 	.superRefine((data, ctx) => {
 		if (data.functionSearchSummarizer && !data.functionSearchSummarizerKey.trim()) {
@@ -61,7 +64,10 @@ const defaultValues = {
 	knowledgebase: '',
 	functionUrlSummarizer: true,
 	functionSearchSummarizer: false,
-	functionSearchSummarizerKey: ''
+	functionSearchSummarizerKey: '',
+	functionReminders: false,
+	functionLanguageDetection: false,
+	functionLanguageDetectionWhitelist: ''
 };
 
 function CompanionFormPage() {

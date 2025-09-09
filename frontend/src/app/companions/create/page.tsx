@@ -24,7 +24,7 @@ const data = [
 	},
 	{
 		id: '3',
-		title: 'WhatsApp',
+		title: 'WhatsApp (deprecated)',
 		description: 'Integration with WhatsApp using Device Linking.',
 		link: `/${RoutePaths.CompanionsWhatsApp}/create`,
 		icon: <MessageCircle size={60} strokeWidth={1} />,

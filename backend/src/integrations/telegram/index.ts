@@ -5,6 +5,7 @@ import { getReactionType, queryGPT } from '../../services/chatgpt';
 import { MessageContent } from '@langchain/core/messages';
 import { Platforms } from '../../constants';
 import logger from '../../services/logger';
+import ClientManager from '../../services/client-manager';
 
 const supportedEmojis = [
 	'👍',
@@ -24,8 +25,6 @@ const supportedEmojis = [
 	'🤬',
 	'👏'
 ];
-
-const botInstances: { [key: string]: Telegraf<Context> } = {};
 
 const Telegram = async () => {
 	const configs: TelegramBotConfig[] = await getTelegramConfigs();
@@ -48,8 +47,12 @@ const createOnMessageHandler = (config: TelegramBotConfig, client: Telegraf<Cont
 		logger.silly(`Telegram message: ${userMessage} `);
 
 		let gptResponse;
+		const messageWithContext = {
+			message: userMessage,
+			context: `serverId: 'Telegram', channelId: ${ctx.update.message.chat.id}, userId: ${ctx.update.message.from.id}, username: ${ctx.update.message.from.username}`
+		};
 		try {
-			gptResponse = await queryGPT(config, userMessage, ctx.message.chat.id.toString());
+			gptResponse = await queryGPT(config, messageWithContext, ctx.message.chat.id.toString());
 		} catch (e) {
 			logger.error(e);
 			ctx.reply('Ewps, error from chatgpt api :pleading_face:');
@@ -75,7 +78,7 @@ export const createTelegramClient = async (config: TelegramBotConfig): Promise<T
 	try {
 		client.launch();
 		createOnMessageHandler(config, client);
-		botInstances[config._id] = client;
+		ClientManager.add(config._id, client);
 		logger.info(`${config.botName} is Online!`);
 	} catch (e) {
 		logger.error(`Error connecting Telegram Bot with config: ${config} | Error message: ${e}`);
@@ -86,7 +89,8 @@ export const createTelegramClient = async (config: TelegramBotConfig): Promise<T
 
 export const restartTelegramClient = async (id: string) => {
 	try {
-		await botInstances[id]?.stop();
+		const instance = ClientManager.get(id);
+		await instance?.stop();
 		const config = await getTelegramConfigById(id);
 		if (config) {
 			await createTelegramClient(config);
@@ -98,7 +102,8 @@ export const restartTelegramClient = async (id: string) => {
 
 export const stopTelegramClient = async (id: string) => {
 	try {
-		await botInstances[id]?.stop();
+		const instance = ClientManager.get(id);
+		await instance?.stop();
 	} catch (e) {
 		logger.error(`Error stopping Telegram Bot with id: ${id} | Error message: ${e}`);
 	}

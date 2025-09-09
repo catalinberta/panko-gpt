@@ -11,6 +11,7 @@ import { connectToDb } from './db/connect';
 import { hideCredentialsFromMongoDbUrl } from './utils';
 import logger, { setLogLevel } from './services/logger';
 import { getSettings } from './models/Settings';
+import { startRemindersScheduler } from './services/reminders';
 
 const app = express();
 
@@ -40,9 +41,13 @@ server.listen(serverPort, () => {
 	logger.info(`API running on http://localhost:${serverPort}`);
 });
 
-const init = async () => {
+const onInitStart = async () => {
 	const settings = await getSettings();
 	setLogLevel(settings?.logLevel!);
+};
+
+const onInitComplete = () => {
+	startRemindersScheduler();
 };
 
 (async () => {
@@ -58,7 +63,8 @@ const init = async () => {
 		logger.error(`Failed to connect to MongoDB Atlas. ${e}. Exiting...`);
 		process.exit(1);
 	}
-	init();
+	onInitStart();
 	integrations();
 	await configureIndex();
+	onInitComplete();
 })();

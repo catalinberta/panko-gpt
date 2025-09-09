@@ -18,6 +18,9 @@ export const BaseConfigSchema = new mongoose.Schema({
 	functionUrlSummarizer: { type: Boolean, required: false, default: true },
 	functionSearchSummarizer: { type: Boolean, required: false, default: false },
 	functionSearchSummarizerKey: { type: String, required: false },
+	functionReminders: { type: Boolean, required: false, default: true },
+	functionLanguageDetection: { type: Boolean, required: false, default: false },
+	functionLanguageDetectionWhitelist: { type: String, required: false, default: '' }
 });
 
 export const BaseConfigModel = mongoose.model('BaseConfig', BaseConfigSchema);

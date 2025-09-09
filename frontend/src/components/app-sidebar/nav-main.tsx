@@ -32,7 +32,7 @@ const CompanionsMenu = [
 		link: `/${RoutePaths.CompanionsTelegram}`
 	},
 	{
-		title: 'WhatsApp',
+		title: 'WhatsApp (deprecated)',
 		path: '/companions/whatsapp',
 		link: `/${RoutePaths.CompanionsWhatsApp}`
 	}
