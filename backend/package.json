@@ -1,6 +1,6 @@
 {
 	"name": "panko-gpt-backend",
-	"version": "1.0.0-alpha",
+	"version": "1.0.1-alpha",
 	"description": "PankoGPT Backend - ChatGPT bot creation platform",
 	"main": "index.js",
 	"directories": {

@@ -189,7 +189,6 @@ export const getLanguageFromText = (text: string, only?: string) => {
 		detectParams.only = only.split(',');
 	}
 	const languages = detectAll(text, detectParams);
-	console.log(123, languages);
 	const accuracyThreshold = 0.25;
 	if (languages.length && languages[0].accuracy > accuracyThreshold) {
 		return langName(toISO3(languages[0].lang));
