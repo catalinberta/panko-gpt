@@ -38,13 +38,24 @@ const formSchema = z
 		knowledgebase: z.string(),
 		functionUrlSummarizer: z.boolean(),
 		functionSearchSummarizer: z.boolean(),
-		functionSearchSummarizerKey: z.string()
+		functionSearchSummarizerKey: z.string(),
+		functionReminders: z.boolean(),
+		functionLanguageDetection: z.boolean(),
+		functionLanguageDetectionWhitelist: z.string()
 	})
 	.superRefine((data, ctx) => {
 		if (data.functionSearchSummarizer && !data.functionSearchSummarizerKey.trim()) {
 			ctx.addIssue({
 				path: ['functionSearchSummarizerKey'],
 				message: 'To enable Search Summarizer, please provide a Brave API Key',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (data.functionLanguageDetection && !data.functionLanguageDetectionWhitelist.trim()) {
+			ctx.addIssue({
+				path: ['functionLanguageDetectionWhitelist'],
+				message:
+					'To enable Language Detection, please provide a comma-separated list of ISO2 language codes e.g. en, ro, it',
 				code: z.ZodIssueCode.custom
 			});
 		}
@@ -63,7 +74,10 @@ const defaultValues = {
 	knowledgebase: '',
 	functionUrlSummarizer: true,
 	functionSearchSummarizer: false,
-	functionSearchSummarizerKey: ''
+	functionSearchSummarizerKey: '',
+	functionReminders: false,
+	functionLanguageDetection: false,
+	functionLanguageDetectionWhitelist: ''
 };
 
 function CompanionFormPage() {

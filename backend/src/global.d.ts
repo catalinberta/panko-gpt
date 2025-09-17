@@ -15,6 +15,14 @@ export interface BaseConfig {
 	functionUrlSummarizer?: boolean;
 	functionSearchSummarizer?: boolean;
 	functionSearchSummarizerKey?: string;
+	functionReminders?: boolean;
+	functionLanguageDetection?: boolean;
+	functionLanguageDetectionWhitelist?: string;
 }
 
 export type BotConfig = DiscordBotConfig | TelegramBotConfig | WhatsappBotConfig;
+
+export interface MessageWithContext {
+	message: string;
+	context?: string;
+}

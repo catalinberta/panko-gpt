@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ActivityType, Client, GatewayIntentBits, Message } from 'discord.js';
+import { ActivityType, Client, Events, GatewayIntentBits, Interaction, Message } from 'discord.js';
 import { sendDiscordMessage } from '../../utils';
 import { getComponents, getReactionType, queryGPT } from '../../services/chatgpt';
 import { getDiscordMessage, sendDiscordTypingInterval } from './utils';
@@ -8,8 +8,7 @@ import { DiscordBotConfig } from './types';
 import { SystemMessage } from '@langchain/core/messages';
 import { Platforms } from '../../constants';
 import logger from '../../services/logger';
-
-const botInstances: { [key: string]: Client } = {};
+import ClientManager from '../../services/client-manager';
 
 const Discord = async () => {
 	const configs = await getDiscordConfigs();
@@ -20,7 +19,7 @@ const Discord = async () => {
 };
 
 const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
-	client.on('messageCreate', async (message: Message) => {
+	client.on(Events.MessageCreate, async (message: Message) => {
 		if (message.author.bot) return;
 		if (client.user && !message.mentions.users.has(client.user.id)) return;
 
@@ -52,6 +51,32 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 			logger.error(`${errorMessage} ${e}`);
 		}
 	});
+	client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+		try {
+			if (interaction.isMessageComponent()) {
+				let componentContent = interaction.message.content;
+				let selectedValue: string | undefined;
+				let values: string[] = [];
+
+				if (interaction.isAnySelectMenu()) {
+					values = interaction.values;
+					selectedValue = values[0];
+				} else if (interaction.isButton()) {
+					selectedValue = interaction.customId;
+				}
+				logger.silly(
+					`User selected from component ${componentContent}, the following option: ${selectedValue}`
+				);
+				await interaction.deferReply();
+				const message = `From this component ${componentContent} I choose ${String(selectedValue)}`;
+				const gptResponse = await queryGPT(config, { message }, interaction.message.channelId);
+				await interaction.deleteReply();
+				sendDiscordMessage(interaction.message, '', gptResponse.response);
+			}
+		} catch (e) {
+			logger.error(String(e));
+		}
+	});
 };
 
 export const createDiscordClient = async (config: DiscordBotConfig) => {
@@ -75,7 +100,7 @@ export const createDiscordClient = async (config: DiscordBotConfig) => {
 	try {
 		await client.login(config.botKey);
 		createOnMessageHandler(config, client);
-		botInstances[config._id] = client;
+		ClientManager.add(config._id, client);
 	} catch (e) {
 		logger.error(`Error connecting Discord Bot with config: ${config} | Error message: ${e}`);
 	}
@@ -85,8 +110,9 @@ export const createDiscordClient = async (config: DiscordBotConfig) => {
 
 export const restartDiscordClient = async (id: string) => {
 	try {
-		await botInstances[id]?.destroy();
-		delete botInstances[id];
+		const instance = ClientManager.get(id);
+		await instance?.destroy();
+		ClientManager.remove(id);
 
 		const config = await getDiscordConfigById(id);
 		if (config) {
@@ -101,8 +127,9 @@ export const stopDiscordClient = async (id: string) => {
 	try {
 		const config = await getDiscordConfigById(id);
 		if (!config) return;
-		await botInstances[id]?.destroy();
-		delete botInstances[id];
+		const instance = ClientManager.get(id);
+		await instance?.destroy();
+		ClientManager.remove(id);
 		logger.info(`${config.botName} is Offline!`);
 	} catch (e) {
 		logger.error(`Error stopping Discord Bot with id: ${id} | Error message: ${e}`);
@@ -140,7 +167,12 @@ const handleGPTResponse = async (config: DiscordBotConfig, discordMessage: any, 
 		]
 	};
 
-	return await queryGPT(config, discordMessage.messageWithReply, message.channelId, [], {}, customPrompt);
+	const messageWithContext = {
+		message: discordMessage.messageWithReply,
+		context: discordMessage.messageContext
+	};
+
+	return await queryGPT(config, messageWithContext, message.channelId, [], {}, customPrompt);
 };
 
 const handleReaction = async (config: DiscordBotConfig, discordMessage: any, gptResponse: any, message: Message) => {

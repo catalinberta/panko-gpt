@@ -19,13 +19,16 @@ export const replaceUserIdsWithNames = async (content: string, guild: Guild) => 
 export const getDiscordMessage = async (
 	client: Client,
 	message: Message
-): Promise<{ userMessage: string; messageWithReply: string }> => {
+): Promise<{ userMessage: string; messageWithReply: string; messageContext: string }> => {
 	const guild = await client.guilds.fetch(message.guildId!);
 	const member = await guild.members.fetch(message.author.id);
 	const displayName = member ? member.displayName : message.author.displayName;
 	const firstTagRegex = /<[^>]+>/;
 	const stripedMessage = message.content.replace(firstTagRegex, '').trim();
-	const userMessage = await replaceUserIdsWithNames(`${displayName}: ${stripedMessage}`, message.guild!);
+	const userPrefix = `<name: ${displayName}>`;
+	const userMessageContent = await replaceUserIdsWithNames(stripedMessage, message.guild!);
+	const userMessage = `${userPrefix}: ${userMessageContent}`;
+	const messageContext = `serverId: ${message.guildId}, channelId: ${message.channelId}, userId: ${message.author.id}, name: ${displayName}`;
 
 	let repliedContent = '';
 
@@ -34,17 +37,21 @@ export const getDiscordMessage = async (
 		if (message.reference && message.reference.messageId) {
 			const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
 			if (referencedMessage.content && message.mentions.repliedUser) {
-				repliedContent = `${message.mentions.repliedUser.username}: ${referencedMessage.content} | `;
+				repliedContent = await replaceUserIdsWithNames(
+					`${message.mentions.repliedUser.username}: ${referencedMessage.content} | `,
+					message.guild!
+				);
 			}
 		}
 	} catch (error) {
 		logger.error(`Could not fetch referenced message: ${error}`);
 	}
-	const messageWithReply = await replaceUserIdsWithNames(repliedContent + userMessage, message.guild!);
+	const messageWithReply = repliedContent + userMessage;
 
 	return {
 		userMessage,
-		messageWithReply
+		messageWithReply,
+		messageContext
 	};
 };
 

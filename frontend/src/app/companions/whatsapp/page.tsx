@@ -8,7 +8,13 @@ import React from 'react';
 async function WhatsAppCompanionsPage() {
 	const whatsAppConfigs = await apiClient.get<WhatsappConfig[]>(ApiPaths.WhatsappConfigs);
 
-	return <DashboardTable title="WhatsApp" routePath={RoutePaths.CompanionsWhatsApp} configs={whatsAppConfigs.data} />;
+	return (
+		<DashboardTable
+			title="WhatsApp (Deprecated)"
+			routePath={RoutePaths.CompanionsWhatsApp}
+			configs={whatsAppConfigs.data}
+		/>
+	);
 }
 
 export default WhatsAppCompanionsPage;

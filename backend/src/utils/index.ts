@@ -1,3 +1,4 @@
+import { detectAll, langName, toISO3 } from 'tinyld';
 import 'dotenv/config';
 import { Message } from 'discord.js';
 import { JSDOM } from 'jsdom';
@@ -176,4 +177,21 @@ export const hideCredentialsFromMongoDbUrl = (url: string) => {
 		const hiddenCluster = `${clusterParts[0].slice(0, -6)}...${clusterParts.slice(1).join('.')}`;
 		return `${hiddenUser}@${hiddenCluster}${params}`;
 	});
+};
+
+interface DetectOption {
+	only: string[];
+	verbose: boolean;
+}
+export const getLanguageFromText = (text: string, only?: string) => {
+	const detectParams: Partial<DetectOption> = {};
+	if (only) {
+		detectParams.only = only.split(',');
+	}
+	const languages = detectAll(text, detectParams);
+	const accuracyThreshold = 0.25;
+	if (languages.length && languages[0].accuracy > accuracyThreshold) {
+		return langName(toISO3(languages[0].lang));
+	}
+	return;
 };
