@@ -18,6 +18,12 @@ export const BaseConfigSchema = new mongoose.Schema({
 	functionUrlSummarizer: { type: Boolean, required: false, default: true },
 	functionSearchSummarizer: { type: Boolean, required: false, default: false },
 	functionSearchSummarizerKey: { type: String, required: false },
+	functionWebSearch: { type: Boolean, required: false, default: false },
+	functionWebSearchGoogleApiKey: { type: String, required: false },
+	functionWebSearchGoogleCseKey: { type: String, required: false },
+	functionImageSearch: { type: Boolean, required: false, default: false },
+	functionImageSearchGoogleApiKey: { type: String, required: false },
+	functionImageSearchGoogleCseKey: { type: String, required: false },
 	functionReminders: { type: Boolean, required: false, default: true },
 	functionLanguageDetection: { type: Boolean, required: false, default: false },
 	functionLanguageDetectionWhitelist: { type: String, required: false, default: '' }

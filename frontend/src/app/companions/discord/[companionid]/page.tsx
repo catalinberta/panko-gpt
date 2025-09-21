@@ -39,15 +39,56 @@ const formSchema = z
 		functionUrlSummarizer: z.boolean(),
 		functionSearchSummarizer: z.boolean(),
 		functionSearchSummarizerKey: z.string(),
+		functionWebSearch: z.boolean(),
+		functionWebSearchGoogleApiKey: z.string(),
+		functionWebSearchGoogleCseKey: z.string(),
+		functionImageSearch: z.boolean(),
+		functionImageSearchGoogleApiKey: z.string(),
+		functionImageSearchGoogleCseKey: z.string(),
 		functionReminders: z.boolean(),
 		functionLanguageDetection: z.boolean(),
-		functionLanguageDetectionWhitelist: z.string()
+		functionLanguageDetectionWhitelist: z
+			.string()
+			.regex(
+				/^$|^[A-Za-z]{2}(?:\s*,\s*[A-Za-z]{2})*$/,
+				'Only two-letter codes and commas are allowed, example: en,ro,it'
+			)
 	})
 	.superRefine((data, ctx) => {
 		if (data.functionSearchSummarizer && !data.functionSearchSummarizerKey.trim()) {
 			ctx.addIssue({
 				path: ['functionSearchSummarizerKey'],
-				message: 'To enable Search Summarizer, please provide a Brave API Key',
+				message: 'Please provide a Brave API Key',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionWebSearch &&
+			(!data.functionWebSearchGoogleApiKey.trim() || !data.functionWebSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionImageSearch &&
+			(!data.functionImageSearchGoogleApiKey.trim() || !data.functionImageSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
 				code: z.ZodIssueCode.custom
 			});
 		}
@@ -75,6 +116,12 @@ const defaultValues = {
 	functionUrlSummarizer: true,
 	functionSearchSummarizer: false,
 	functionSearchSummarizerKey: '',
+	functionWebSearch: false,
+	functionWebSearchGoogleApiKey: '',
+	functionWebSearchGoogleCseKey: '',
+	functionImageSearch: false,
+	functionImageSearchGoogleApiKey: '',
+	functionImageSearchGoogleCseKey: '',
 	functionReminders: false,
 	functionLanguageDetection: false,
 	functionLanguageDetectionWhitelist: ''

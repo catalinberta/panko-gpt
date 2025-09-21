@@ -105,11 +105,21 @@ const searchSummarizer = async (apiKey?: string, userquery?: string): Promise<Su
 };
 
 const searchSummarizerTool = (apiKey?: string) =>
-	tool(searchSummarizer.bind(null, apiKey), {
-		name: 'searchSummarizer',
-		description:
-			'Search the internet and get a summarization for recent or real-time information. Returns an object with `summary` (string) and `imageUrl` (string or null) fields. Use `summary` for the text and `imageUrl` for an associated image.',
-		schema: searchSummarizerParams
-	});
+	tool(
+		async (input: unknown) => {
+			const parseResult = searchSummarizerParams.safeParse(input);
+			if (!parseResult.success) {
+				logger.warn('Invalid input for searchSummarizerTool:', parseResult.error);
+				return { summary: '', imageUrl: null };
+			}
+			return searchSummarizer(apiKey, parseResult.data);
+		},
+		{
+			name: 'searchSummarizer',
+			description:
+				'Search the internet and get a summarization for recent or real-time information. Returns an object with `summary` (string) and `imageUrl` (string or null) fields. Use `summary` for the text and `imageUrl` for an associated image.',
+			schema: searchSummarizerParams
+		}
+	);
 
 export default searchSummarizerTool;

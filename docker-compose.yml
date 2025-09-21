@@ -6,7 +6,7 @@ services:
             dockerfile: Dockerfile
             args:
                 NODE_ENV: production
-        image: catalinbertadev/panko-gpt:1.0.1-alpha
+        image: catalinbertadev/panko-gpt:1.0.0-alpha.2
         platform: linux/amd64
         environment:
             NODE_ENV: production

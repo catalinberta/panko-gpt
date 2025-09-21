@@ -38,6 +38,12 @@ const formSchema = z
 		functionUrlSummarizer: z.boolean(),
 		functionSearchSummarizer: z.boolean(),
 		functionSearchSummarizerKey: z.string(),
+		functionWebSearch: z.boolean(),
+		functionWebSearchGoogleApiKey: z.string(),
+		functionWebSearchGoogleCseKey: z.string(),
+		functionImageSearch: z.boolean(),
+		functionImageSearchGoogleApiKey: z.string(),
+		functionImageSearchGoogleCseKey: z.string(),
 		functionReminders: z.boolean(),
 		functionLanguageDetection: z.boolean(),
 		functionLanguageDetectionWhitelist: z.string()
@@ -47,6 +53,44 @@ const formSchema = z
 			ctx.addIssue({
 				path: ['functionSearchSummarizerKey'],
 				message: 'To enable Search Summarizer, please provide a Brave API Key',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionWebSearch &&
+			(!data.functionWebSearchGoogleApiKey.trim() || !data.functionWebSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionImageSearch &&
+			(!data.functionImageSearchGoogleApiKey.trim() || !data.functionImageSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (data.functionLanguageDetection && !data.functionLanguageDetectionWhitelist.trim()) {
+			ctx.addIssue({
+				path: ['functionLanguageDetectionWhitelist'],
+				message:
+					'To enable Language Detection, please provide a comma-separated list of ISO2 language codes e.g. en, ro, it',
 				code: z.ZodIssueCode.custom
 			});
 		}
@@ -65,6 +109,12 @@ const defaultValues = {
 	functionUrlSummarizer: true,
 	functionSearchSummarizer: false,
 	functionSearchSummarizerKey: '',
+	functionWebSearch: false,
+	functionWebSearchGoogleApiKey: '',
+	functionWebSearchGoogleCseKey: '',
+	functionImageSearch: false,
+	functionImageSearchGoogleApiKey: '',
+	functionImageSearchGoogleCseKey: '',
 	functionReminders: false,
 	functionLanguageDetection: false,
 	functionLanguageDetectionWhitelist: ''

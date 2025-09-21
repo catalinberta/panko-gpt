@@ -7,7 +7,7 @@ import {
 	sleep
 } from '../../utils';
 import { chatGptDefaults } from '../../constants';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatOpenAI, ChatOpenAIFields, OpenAIEmbeddings } from '@langchain/openai';
 import { BotConfig, MessageWithContext } from '../../global';
 import {
 	SystemMessage,
@@ -21,7 +21,6 @@ import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
 import summarizeWebpageUrlTool from './tools/webpageContent';
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import searchSummarizerTool from './tools/searchSummarizer';
 import logger from '../logger';
 import { ReactionEmoji } from 'discord.js';
 import {
@@ -31,6 +30,8 @@ import {
 	removeReminderTool,
 	updateReminderTool
 } from './tools/reminder';
+import webSearchTool from './tools/webSearch';
+import imageSearchTool from './tools/imageSearch';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -45,11 +46,24 @@ const textToChunksContext = `
 	Your response should strictly adhere to text segmentation without providing answers, explanations, or interpretations of the user's text content. 
 `;
 
+export const createLLM = (apiKey: string, model: string) => {
+	const params: ChatOpenAIFields = {
+		apiKey,
+		model,
+		reasoningEffort: 'medium',
+		verbosity: 'medium'
+	};
+	if (model.startsWith('gpt-5')) {
+		params.reasoningEffort = 'low';
+		params.verbosity = 'low';
+	}
+	return new ChatOpenAI(params);
+};
+
 type QueryGptResult = {
 	response: string;
 	toolMessages: string[];
 };
-
 export const queryGPT = async (
 	config: BotConfig,
 	userMessage: MessageWithContext,
@@ -66,51 +80,57 @@ export const queryGPT = async (
 	disableTools?: boolean
 ): Promise<QueryGptResult> => {
 	const gptModel = config.chatGptModel || chatGptDefaults.model;
+	let timeToResponse = new Date().getTime();
+	logger.debug(`Using model: ${gptModel}`);
 
-	logger.verbose(`Using model: ${gptModel}`);
-
-	const model = new ChatOpenAI({
-		openAIApiKey: config.openAiKey,
-		model: gptModel
-	});
+	const model = createLLM(config.openAiKey, gptModel);
 
 	const initializedSummarizeWebpageUrlTool = summarizeWebpageUrlTool(config.openAiKey);
-	const initializedSearchSummarizerTool = searchSummarizerTool(config.functionSearchSummarizerKey);
 	const initializedGetAllRemindersTool = getAllRemindersTool();
 	const initializedAddReminderTool = addReminderTool(config._id);
 	const initializedUpdateReminderTool = updateReminderTool();
 	const initializedGetReminderByIdTool = getReminderByIdTool();
 	const initializedRemoveReminderByIdTool = removeReminderTool();
+	const initializedWebSearchTool = webSearchTool(
+		config.openAiKey,
+		config.functionWebSearchGoogleApiKey,
+		config.functionWebSearchGoogleCseKey
+	);
+	const initializedImageSearchTool = imageSearchTool(
+		config.functionWebSearchGoogleApiKey,
+		config.functionWebSearchGoogleCseKey
+	);
 
 	const toolsByName: {
 		[key: string]: DynamicTool | DynamicStructuredTool<any>;
 	} = {
-		searchSummarizer: initializedSearchSummarizerTool,
 		summarizeWebpageUrl: initializedSummarizeWebpageUrlTool,
 		getAllReminders: initializedGetAllRemindersTool,
 		addReminder: initializedAddReminderTool,
 		updateReminder: initializedUpdateReminderTool,
 		getReminderById: initializedGetReminderByIdTool,
-		removeReminder: initializedRemoveReminderByIdTool
+		removeReminder: initializedRemoveReminderByIdTool,
+		webSearch: initializedWebSearchTool,
+		imageSearch: initializedImageSearchTool
 	};
-	const messages = [];
 
+	const messages = [];
 	const tools = [];
 
 	if (!disableTools) {
-		config.functionSearchSummarizer && tools.push(initializedSearchSummarizerTool);
-		config.functionSearchSummarizer &&
-			messages.push(
-				new SystemMessage(
-					'Do not generate image urls yourself. You can use searchSummarizer tool to also look for images to enrich responses.'
-				)
-			);
 		config.functionUrlSummarizer && tools.push(initializedSummarizeWebpageUrlTool);
 		config.functionReminders && tools.push(initializedGetAllRemindersTool);
 		config.functionReminders && tools.push(initializedGetReminderByIdTool);
 		config.functionReminders && tools.push(initializedAddReminderTool);
 		config.functionReminders && tools.push(initializedUpdateReminderTool);
 		config.functionReminders && tools.push(initializedRemoveReminderByIdTool);
+		config.functionWebSearch && tools.push(initializedWebSearchTool);
+		config.functionImageSearch && tools.push(initializedImageSearchTool);
+		messages.push(
+			new SystemMessage(
+				'Do not generate image urls yourself. You can use imageSearch tool to also look for images to enrich responses.'
+			)
+		);
 	}
 
 	if (customTools && customTools.length) {
@@ -147,9 +167,10 @@ export const queryGPT = async (
 	messages.push(new HumanMessage(userMessage.message));
 
 	if (config.functionLanguageDetection) {
-		const userLanguage = getLanguageFromText(userMessage.message, config.functionLanguageDetectionWhitelist);
+		const cleanedUserMessage = userMessage.message.replace(/<[^>]*>\s*/, '');
+		const userLanguage = getLanguageFromText(cleanedUserMessage, config.functionLanguageDetectionWhitelist);
 		if (userLanguage) {
-			logger.debug('User language:', userLanguage);
+			logger.debug(`User language: ${userLanguage}`);
 			messages.push(
 				new SystemMessage(`User's last message was in ${userLanguage}, please answer in ${userLanguage}`)
 			);
@@ -187,33 +208,37 @@ export const queryGPT = async (
 		messages.push(aiResponse);
 
 		for (const toolCall of aiResponse.tool_calls) {
-			logger.silly(`Using LLM tool: ${toolCall.name}`);
+			logger.debug(`Using LLM tool: ${toolCall.name}`);
 			const selectedTool = toolsByName[toolCall.name];
 			if (!selectedTool) {
 				const note = `Requested tool "${toolCall.name}" is not available.`;
 				logger.warn(note);
-				messages.push(new SystemMessage(note));
+				messages.push(
+					new ToolMessage({
+						tool_call_id: toolCall.id!,
+						content: note
+					})
+				);
 				continue;
 			}
+			let toolResultContent: string;
 			try {
-				const toolMessage = await selectedTool.invoke(toolCall);
-				logger.silly(`Tool response: ${JSON.stringify(toolMessage, null, 2)}`);
-				messages.push(toolMessage);
-				const contentStr = Array.isArray((toolMessage as any).content)
-					? (toolMessage as any).content
-							.map((c: any) => (typeof c === 'string' ? c : JSON.stringify(c)))
-							.join('\n')
-					: String((toolMessage as any).content ?? '');
-				toolMessages.push(contentStr);
+				const toolOutput = await (selectedTool as any).invoke(toolCall.args);
+				logger.silly(`Tool response: ${JSON.stringify(toolOutput, null, 2)}`);
+				toolMessages.push(JSON.stringify(toolOutput));
+				toolResultContent = typeof toolOutput === 'string' ? toolOutput : JSON.stringify(toolOutput);
 			} catch (err: any) {
 				const errMsg = `Tool "${toolCall.name}" failed: ${err?.message || String(err)}`;
 				logger.error(errMsg);
-				const failedToolMessage = new ToolMessage({
-					tool_call_id: toolCall.id!,
-					content: `Error: ${errMsg}`
-				});
-				messages.push(failedToolMessage);
+				toolResultContent = `Tool Error: ${errMsg}`;
 			}
+
+			messages.push(
+				new ToolMessage({
+					tool_call_id: toolCall.id!,
+					content: toolResultContent
+				})
+			);
 		}
 
 		iterations += 1;
@@ -228,7 +253,8 @@ export const queryGPT = async (
 		await setPreviousMessage(config, conversationId, undefined, toolMessages[i]);
 	}
 
-	logger.silly(`LLM response: ${responseContent}`);
+	timeToResponse = Math.round((new Date().getTime() - timeToResponse) / 1000);
+	logger.silly(`LLM response [${timeToResponse}s]:  ${responseContent}`);
 
 	return {
 		response: responseContent,
@@ -243,12 +269,7 @@ export const getReactionType = async (
 	userMessage: string,
 	gptAnswer: MessageContent
 ): Promise<ReactionEmoji> => {
-	const gptModel = config.chatGptModel || chatGptDefaults.model;
-
-	const model = new ChatOpenAI({
-		openAIApiKey: config.openAiKey,
-		model: gptModel
-	});
+	const model = createLLM(config.openAiKey, chatGptDefaults.smallModel);
 
 	const messages = [];
 
@@ -297,13 +318,7 @@ export const getComponents = async (
 	userMessage: string,
 	gptAnswer: MessageContent
 ) => {
-	const gptModel = config.chatGptModel || chatGptDefaults.model;
-
-	const model = new ChatOpenAI({
-		openAIApiKey: config.openAiKey,
-		model: gptModel
-	});
-
+	const model = createLLM(config.openAiKey, chatGptDefaults.smallModel);
 	const messages = [];
 
 	messages.push(
@@ -312,6 +327,8 @@ export const getComponents = async (
 			You are an AI tool that parses a user message and its chatgpt response and prepares the response for Discord Components V2.
 				- Messages must also have a top-level "content" field for plain text.
 				- Messages can optionally include a "components" array for interactive elements. Use components only for clear user interaction.
+				- If the message content contains a valid image URL (ending in .jpg, .jpeg, .png, .webp, or .gif), always include an embed object in the embeds array with that URL in the image.url field.
+				- If a component contains a "mailto:" link, do not render it as a button; instead, replace it with a markdown mail link [email](mailto:email) inside the "content" field.
 				- Do not use "embeds" for text content. 
 
 			Supported Embed Structure (within the "embeds" array, each object represents one embed):
@@ -349,6 +366,16 @@ export const getComponents = async (
 				
 			{
 				"content": "This is the main text content.",
+				"embeds": [
+					{
+						"title": "Image title",
+						"description": "Image description.",
+						"image": {
+							"url": "https://example.com/image.png"
+						},
+						"color": 5814783
+					}
+				],
 				"components": [
 					{
 					"type": 1,
@@ -433,10 +460,7 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 	logger.info(
 		`Knowledgebase Update: Processing ${textSplits.length} batches of ~${textBatchSize} chars each. Please wait...`
 	);
-	const model = new ChatOpenAI({
-		openAIApiKey: apiKey,
-		model: 'gpt-4o-mini'
-	});
+	const model = createLLM(apiKey, chatGptDefaults.smallModel);
 
 	const processTextSplits = async (textSplit: string, currentIndex: number) => {
 		const messages = [];
@@ -467,4 +491,18 @@ export const parseTextToChunksArray = async (apiKey: string, text: string) => {
 	}
 
 	return chunksArray;
+};
+
+export const summarizeText = async (apiKey: string, text: string, maxTokens: number = 400, userquery?: string) => {
+	const model = createLLM(apiKey, chatGptDefaults.smallModel);
+	const messages = [
+		new SystemMessage(
+			`Summarize the following text up to a maximum of ${maxTokens} tokens. ${
+				userquery ? 'Summarization is requested from the following user query: ' + userquery : ''
+			}`
+		),
+		new HumanMessage(text)
+	];
+	const gptResponse = await model.invoke(messages);
+	return String(gptResponse.content);
 };

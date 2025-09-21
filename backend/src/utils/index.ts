@@ -1,21 +1,24 @@
 import { detectAll, langName, toISO3 } from 'tinyld';
 import 'dotenv/config';
 import { Message } from 'discord.js';
-import { JSDOM } from 'jsdom';
 import puppeteer from 'puppeteer-extra';
 import Stealth from 'puppeteer-extra-plugin-stealth';
 import AnonymizeUAPlugin from 'puppeteer-extra-plugin-anonymize-ua';
 import { BotConfig } from '../global';
 import { searchVectorData } from '../models/VectorData';
-import { getEmbeddingFromString } from '../services/chatgpt';
-import { ChatOpenAI } from '@langchain/openai';
+import { createLLM, getEmbeddingFromString } from '../services/chatgpt';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { encode } from 'gpt-3-encoder';
 import { AIMessage, MessageContent } from '@langchain/core/messages';
 import logger from '../services/logger';
+import { chatGptDefaults } from '../constants';
 
 puppeteer.use(Stealth());
 puppeteer.use(AnonymizeUAPlugin());
+
+export const sleep = (ms: number = 0): Promise<void> => {
+	return new Promise(resolve => setTimeout(resolve, ms));
+};
 
 export const sendDiscordMessage = async (
 	message: Message,
@@ -40,84 +43,9 @@ export const sendDiscordMessage = async (
 	}
 };
 
-export const getWebPageContentFromUrl = async (url: string) => {
-	const browser = await puppeteer.launch({
-		executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-		args: [
-			'--no-sandbox',
-			'--disable-dev-shm-usage',
-			'--disable-setuid-sandbox',
-			'--disable-gpu=False',
-			'--enable-webgl',
-			'--user-data-dir=/tmp/chrome-user-data'
-		],
-		headless: true,
-		timeout: 10_000,
-		protocolTimeout: 20_000
-	});
-	const page = await browser.newPage();
-	await page.setExtraHTTPHeaders({
-		'upgrade-insecure-requests': '1',
-		accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-		'accept-encoding': 'gzip, deflate, br',
-		'accept-language': 'en-US,en;q=0.9,en;q=0.8'
-	});
-	await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/110.0');
-	await page.setRequestInterception(true);
-	await page.setJavaScriptEnabled(true);
-	page.on('request', async (request: any) => {
-		const typesToAbort = ['image', 'media', 'font'];
-		if (typesToAbort.indexOf(request.resourceType().toLowerCase()) > -1) {
-			await request.abort();
-		} else {
-			await request.continue();
-		}
-	});
-	try {
-		await page.goto(url, { waitUntil: 'domcontentloaded' });
-	} catch (e) {
-		logger.error(`Error opening url ${e}`);
-		throw new Error(`Error opening ${url}, might be protected`);
-	}
-	let pageSourceHTML;
-	try {
-		pageSourceHTML = await page.content();
-	} catch (e) {
-		logger.error(`error accessing page ${e}`);
-	}
-	await browser.close();
-	return pageSourceHTML || '';
-};
-
-export const extractTextFromHTML = (htmlString: string): string => {
-	const { window } = new JSDOM(htmlString);
-	const { document } = window;
-
-	function recursiveTextExtraction(node: Node): string {
-		let text: string = '';
-		node.childNodes.forEach((child: Node) => {
-			if (child.nodeType === 3) {
-				text += (child.nodeValue || '').replace(/\s{2,}/g, ' ') + ' ';
-			} else if (
-				child.nodeType === 1 &&
-				child.nodeName.toLowerCase() !== 'script' &&
-				child.nodeName.toLowerCase() !== 'style'
-			) {
-				text += recursiveTextExtraction(child);
-			}
-		});
-		return text;
-	}
-
-	return recursiveTextExtraction(document.body);
-};
-
 export const getKnowledebaseContext = async (query: string, config: BotConfig): Promise<AIMessage | null> => {
 	try {
-		const llm = new ChatOpenAI({
-			openAIApiKey: config.openAiKey,
-			model: 'gpt-4o-mini'
-		});
+		const llm = createLLM(config.openAiKey, chatGptDefaults.smallModel);
 		const standaloneTemplate =
 			'Given the following user input with possible non-essential verbose details, convert it to a standalone input by removing non-essential details but keep the prefixed name in order to use it in vector embeddings search: {userInput}';
 		const standaloneInputPrompt = PromptTemplate.fromTemplate(standaloneTemplate);
@@ -143,10 +71,6 @@ export const getKnowledebaseContext = async (query: string, config: BotConfig): 
 		logger.error(`Error getting data from knowledgebase {e}`);
 		return null;
 	}
-};
-
-export const sleep = (ms: number = 0): Promise<void> => {
-	return new Promise(resolve => setTimeout(resolve, ms));
 };
 
 export const countGptTokens = (text: string): number => {
@@ -183,15 +107,24 @@ interface DetectOption {
 	only: string[];
 	verbose: boolean;
 }
-export const getLanguageFromText = (text: string, only?: string) => {
+export const getLanguageFromText = (text: string, whitelist?: string) => {
 	const detectParams: Partial<DetectOption> = {};
-	if (only) {
-		detectParams.only = only.split(',');
+	if (whitelist) {
+		detectParams.only = whitelist.split(',');
 	}
+	const accuracyThreshold = 0.5;
 	const languages = detectAll(text, detectParams);
-	const accuracyThreshold = 0.25;
+	if (!languages.length) {
+		logger.debug('Language not detected.');
+		return null;
+	}
+	logger.debug(
+		`Language detection. Language: ${languages[0].lang}. Accuracy: ${
+			languages[0].accuracy
+		}. All Languages: ${JSON.stringify(languages)}`
+	);
 	if (languages.length && languages[0].accuracy > accuracyThreshold) {
 		return langName(toISO3(languages[0].lang));
 	}
-	return;
+	return null;
 };

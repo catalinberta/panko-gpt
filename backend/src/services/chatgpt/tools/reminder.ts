@@ -107,30 +107,74 @@ export const getAllRemindersTool = () =>
 	});
 
 export const getReminderByIdTool = () =>
-	tool(getReminderByIdFormatted, {
-		name: 'getReminderById',
-		description: 'Get a reminder by _id that always includes the _id value in the response',
-		schema: schemaExtendedWithId
-	});
+	tool(
+		async (input: unknown) => {
+			const parseResult = schemaExtendedWithId.safeParse(input);
+			if (!parseResult.success) {
+				const errorMessage = 'Invalid input for getReminderById';
+				logger.warn(errorMessage, parseResult.error);
+				return errorMessage;
+			}
+			return getReminderByIdFormatted(parseResult.data);
+		},
+		{
+			name: 'getReminderById',
+			description: 'Get a reminder by _id that always includes the _id value in the response',
+			schema: schemaExtendedWithId
+		}
+	);
 
 export const addReminderTool = (configId: string) =>
-	tool(addReminderFormatted.bind(null, configId), {
-		name: 'addReminder',
-		description:
-			'Add a new reminder if the user explicitly requests it (e.g., using phrases like "add a reminder for", "create a reminder at", or "set a reminder"). Do not call this for vague mentions of dates, times, or events without clear intent to create one. Always include a descriptive title or note if provided; default to a generic one if not.',
-		schema
-	});
+	tool(
+		async (input: unknown) => {
+			const parseResult = schema.safeParse(input);
+			if (!parseResult.success) {
+				const errorMessage = 'Invalid input for addReminderTool:';
+				logger.warn(errorMessage, parseResult.error);
+				return errorMessage;
+			}
+			return addReminderFormatted(configId, parseResult.data);
+		},
+		{
+			name: 'addReminder',
+			description:
+				'Add a new reminder if the user explicitly requests it (e.g., using phrases like "add a reminder for", "create a reminder at", or "set a reminder"). Do not call this for vague mentions of dates, times, or events without clear intent to create one. Always include a descriptive title or note if provided; default to a generic one if not.',
+			schema
+		}
+	);
 export const updateReminderTool = () =>
-	tool(updateReminderFormatted, {
-		name: 'updateReminder',
-		description:
-			"Update an existing reminder ONLY if the user explicitly requests changes (e.g., 'update reminder X to...', 'change my reminder for...",
-		schema: schemaExtendedWithId
-	});
+	tool(
+		async (input: unknown) => {
+			const parseResult = schemaExtendedWithId.safeParse(input);
+			if (!parseResult.success) {
+				const errorMessage = 'Invalid input for updateReminderTool';
+				logger.warn(errorMessage, parseResult.error);
+				return errorMessage;
+			}
+			return updateReminderFormatted(parseResult.data);
+		},
+		{
+			name: 'updateReminder',
+			description:
+				"Update an existing reminder ONLY if the user explicitly requests changes (e.g., 'update reminder X to...', 'change my reminder for...",
+			schema: schemaExtendedWithId
+		}
+	);
 export const removeReminderTool = () =>
-	tool(removeReminderByIdFormatted, {
-		name: 'removeReminder',
-		description:
-			"Remove a reminder ONLY if the user explicitly asks to delete it (e.g., 'delete reminder ID X', 'remove my reminder for...",
-		schema: schemaId
-	});
+	tool(
+		async (input: unknown) => {
+			const parseResult = schemaExtendedWithId.safeParse(input);
+			if (!parseResult.success) {
+				const errorMessage = 'Invalid input for removeReminderTool';
+				logger.warn(errorMessage, parseResult.error);
+				return errorMessage;
+			}
+			return removeReminderByIdFormatted(parseResult.data);
+		},
+		{
+			name: 'removeReminder',
+			description:
+				"Remove a reminder ONLY if the user explicitly asks to delete it (e.g., 'delete reminder ID X', 'remove my reminder for...",
+			schema: schemaId
+		}
+	);

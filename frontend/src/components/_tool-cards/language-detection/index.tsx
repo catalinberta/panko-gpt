@@ -27,7 +27,7 @@ const LanguageDetetionToolCard = <T extends FieldValues>(props: LanguageDetetion
 					name={'functionLanguageDetectionWhitelist' as Path<T>}
 					label="Language Whitelist"
 					description={
-						'Restrict language detection only to a specific whitelist. Enter a comma-separated list of ISO2 language codes e.g. en, es, it'
+						'Restrict language detection only to a specific whitelist. Enter a comma-separated list of ISO2 language codes e.g. en,es,it'
 					}
 				/>
 			</CardContent>
