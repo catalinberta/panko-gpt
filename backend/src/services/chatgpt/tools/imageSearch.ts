@@ -9,10 +9,15 @@ const googleImageSearch = async (apiKey: string, cx: string, query: string): Pro
 		const res = await fetch(
 			`https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
 				query
-			)}&searchType=image&num=1&key=${apiKey}&cx=${cx}`
+			)}&searchType=image&num=10&key=${apiKey}&cx=${cx}`
 		);
 		const data = await res.json();
-		return data.items?.[0]?.link ?? null;
+		if (!data.items) return null;
+
+		const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+		const safeItem = data.items.find((item: any) => allowed.includes(item.mime));
+
+		return safeItem?.link ?? null;
 	} catch (e) {
 		logger.error(`Google Image Search failed: ${e}`);
 		return null;
