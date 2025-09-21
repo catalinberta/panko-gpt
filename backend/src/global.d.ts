@@ -15,6 +15,12 @@ export interface BaseConfig {
 	functionUrlSummarizer?: boolean;
 	functionSearchSummarizer?: boolean;
 	functionSearchSummarizerKey?: string;
+	functionWebSearch?: boolean;
+	functionWebSearchGoogleApiKey?: string;
+	functionWebSearchGoogleCseKey?: string;
+	functionImageSearch?: boolean;
+	functionImageSearchGoogleApiKey?: string;
+	functionImageSearchGoogleCseKey?: string;
 	functionReminders?: boolean;
 	functionLanguageDetection?: boolean;
 	functionLanguageDetectionWhitelist?: string;

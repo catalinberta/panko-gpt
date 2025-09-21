@@ -3,6 +3,8 @@ import { BotConfig } from '../../global';
 import { ChatOpenAI } from '@langchain/openai';
 import { SystemMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../logger';
+import { chatGptDefaults } from '../../constants';
+import { createLLM } from '../chatgpt';
 
 const messages: { [key: string]: any[] } = {};
 
@@ -25,10 +27,7 @@ export const setPreviousMessage = async (
 	const userMessageTokens = userMessage ? countGptTokens(userMessage) : 0;
 	const assistantMessageTokens = assistantMessage ? countGptTokens(assistantMessage) : 0;
 
-	const model = new ChatOpenAI({
-		openAIApiKey: config.openAiKey,
-		model: 'gpt-4o-mini'
-	});
+	const model = createLLM(config.openAiKey, chatGptDefaults.smallModel);
 
 	if (userMessage) {
 		if (userMessageTokens > tokenLimit) {

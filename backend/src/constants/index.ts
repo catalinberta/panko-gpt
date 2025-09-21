@@ -8,21 +8,22 @@ export const atlasDefaults = {
 };
 
 export const chatGptDefaults = {
-	model: 'gpt-4o'
+	model: 'gpt-5',
+	smallModel: 'gpt-5-mini'
 };
 
 export enum Platforms {
-	Discord = "Discord",
-	Telegram = "Telegram",
-	Whatsapp = "Whatsapp"
+	Discord = 'Discord',
+	Telegram = 'Telegram',
+	Whatsapp = 'Whatsapp'
 }
 
 export enum LogLevels {
-	Error = "error",
-	Warn = "warn",
-	Info = "info",
-	Http = "http",
-	Verbose = "verbose",
-	Debug = "debug",
-	Silly = "silly"
-  }
+	Error = 'error',
+	Warn = 'warn',
+	Info = 'info',
+	Http = 'http',
+	Verbose = 'verbose',
+	Debug = 'debug',
+	Silly = 'silly'
+}

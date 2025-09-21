@@ -17,8 +17,7 @@ const WebpageContentToolCard: <T extends FieldValues>(
 			<CardHeader>
 				<CardTitle>URL Summarizer</CardTitle>
 				<CardDescription>
-					This enables the bot to both access urls inside messages and access the internet via web urls as it
-					sees fit in order to enrich its context.
+					This enables the bot to scrape urls inside messages and read their content.
 				</CardDescription>
 				<CardAction>
 					<Switch className="gap-0" name={props.name} control={props.control} />

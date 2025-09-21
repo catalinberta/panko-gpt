@@ -69,26 +69,3 @@ export const sendDiscordTypingInterval = async (message: Message) => {
 
 	return sendTypingInterval;
 };
-
-export function renderFullDiscordMessage(modelOutput: any): MessageCreateOptions {
-	const { content, components, attachments } = modelOutput;
-	logger.silly(`renderFullDiscordMessage: ${JSON.stringify(modelOutput, null, 2)}`);
-
-	const renderedAttachments = (attachments || []).map((att: any) => new AttachmentBuilder(att.url).setName(att.name));
-
-	const v2Components: any[] = [];
-
-	if (content) {
-		v2Components.push({
-			type: 10,
-			content: content
-		});
-	}
-
-	return {
-		// content: content,
-		flags: 1 << 15, // Enable V2 components
-		components: components || []
-		// files: renderedAttachments
-	};
-}

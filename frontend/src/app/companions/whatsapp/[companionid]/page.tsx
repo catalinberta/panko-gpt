@@ -42,13 +42,59 @@ const formSchema = z
 		contactsBlacklist: z.array(z.string()),
 		functionUrlSummarizer: z.boolean(),
 		functionSearchSummarizer: z.boolean(),
-		functionSearchSummarizerKey: z.string()
+		functionSearchSummarizerKey: z.string(),
+		functionWebSearch: z.boolean(),
+		functionWebSearchGoogleApiKey: z.string(),
+		functionWebSearchGoogleCseKey: z.string(),
+		functionImageSearch: z.boolean(),
+		functionImageSearchGoogleApiKey: z.string(),
+		functionImageSearchGoogleCseKey: z.string(),
+		functionLanguageDetection: z.boolean(),
+		functionLanguageDetectionWhitelist: z.string()
 	})
 	.superRefine((data, ctx) => {
 		if (data.functionSearchSummarizer && !data.functionSearchSummarizerKey.trim()) {
 			ctx.addIssue({
 				path: ['functionSearchSummarizerKey'],
 				message: 'To enable Search Summarizer, please provide a Brave API Key',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionWebSearch &&
+			(!data.functionWebSearchGoogleApiKey.trim() || !data.functionWebSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionWebSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (
+			data.functionImageSearch &&
+			(!data.functionImageSearchGoogleApiKey.trim() || !data.functionImageSearchGoogleCseKey.trim())
+		) {
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleApiKey'],
+				message: 'Please provide a Google API Key',
+				code: z.ZodIssueCode.custom
+			});
+			ctx.addIssue({
+				path: ['functionImageSearchGoogleCseKey'],
+				message: 'Please provide a Google CSE (CX) Id',
+				code: z.ZodIssueCode.custom
+			});
+		}
+		if (data.functionLanguageDetection && !data.functionLanguageDetectionWhitelist.trim()) {
+			ctx.addIssue({
+				path: ['functionLanguageDetectionWhitelist'],
+				message:
+					'To enable Language Detection, please provide a comma-separated list of ISO2 language codes e.g. en, ro, it',
 				code: z.ZodIssueCode.custom
 			});
 		}
@@ -69,7 +115,15 @@ const defaultValues = {
 	contactsBlacklist: [],
 	functionUrlSummarizer: true,
 	functionSearchSummarizer: false,
-	functionSearchSummarizerKey: ''
+	functionSearchSummarizerKey: '',
+	functionWebSearch: false,
+	functionWebSearchGoogleApiKey: '',
+	functionWebSearchGoogleCseKey: '',
+	functionImageSearch: false,
+	functionImageSearchGoogleApiKey: '',
+	functionImageSearchGoogleCseKey: '',
+	functionLanguageDetection: false,
+	functionLanguageDetectionWhitelist: ''
 };
 
 function CompanionFormPage() {

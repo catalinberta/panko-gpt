@@ -40,9 +40,7 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 		clearInterval(typingInterval);
 
 		if (await handleReaction(config, discordMessage, gptResponse, message)) return;
-
 		const componentResponse = await handleComponents(config, discordMessage, gptResponse);
-
 		try {
 			sendDiscordMessage(message, gptResponse.response, JSON.parse(componentResponse as string));
 		} catch (e) {
@@ -70,8 +68,9 @@ const createOnMessageHandler = (config: DiscordBotConfig, client: Client) => {
 				await interaction.deferReply();
 				const message = `From this component ${componentContent} I choose ${String(selectedValue)}`;
 				const gptResponse = await queryGPT(config, { message }, interaction.message.channelId);
+				const componentResponse = await handleComponents(config, message, gptResponse);
 				await interaction.deleteReply();
-				sendDiscordMessage(interaction.message, '', gptResponse.response);
+				sendDiscordMessage(interaction.message, gptResponse.response, JSON.parse(componentResponse as string));
 			}
 		} catch (e) {
 			logger.error(String(e));
