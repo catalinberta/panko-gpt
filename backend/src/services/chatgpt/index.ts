@@ -167,7 +167,8 @@ export const queryGPT = async (
 	messages.push(new HumanMessage(userMessage.message));
 
 	if (config.functionLanguageDetection) {
-		const userLanguage = getLanguageFromText(userMessage.message, config.functionLanguageDetectionWhitelist);
+		const cleanedUserMessage = userMessage.message.replace(/<[^>]*>\s*/, '');
+		const userLanguage = getLanguageFromText(cleanedUserMessage, config.functionLanguageDetectionWhitelist);
 		if (userLanguage) {
 			logger.debug(`User language: ${userLanguage}`);
 			messages.push(

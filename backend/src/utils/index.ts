@@ -107,13 +107,17 @@ interface DetectOption {
 	only: string[];
 	verbose: boolean;
 }
-export const getLanguageFromText = (text: string, only?: string) => {
+export const getLanguageFromText = (text: string, whitelist?: string) => {
 	const detectParams: Partial<DetectOption> = {};
-	if (only) {
-		detectParams.only = only.split(',');
+	if (whitelist) {
+		detectParams.only = whitelist.split(',');
 	}
-	const languages = detectAll(text, detectParams);
 	const accuracyThreshold = 0.5;
+	const languages = detectAll(text, detectParams);
+	if (!languages.length) {
+		logger.debug('Language not detected.');
+		return null;
+	}
 	logger.debug(
 		`Language detection. Language: ${languages[0].lang}. Accuracy: ${
 			languages[0].accuracy
