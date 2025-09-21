@@ -21,7 +21,6 @@ import { getPreviousMessages, setPreviousMessage } from '../previous-messages';
 import summarizeWebpageUrlTool from './tools/webpageContent';
 import { DynamicStructuredTool, DynamicTool } from '@langchain/core/tools';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-// import searchSummarizerTool from './tools/searchSummarizer';
 import logger from '../logger';
 import { ReactionEmoji } from 'discord.js';
 import {
@@ -33,7 +32,6 @@ import {
 } from './tools/reminder';
 import webSearchTool from './tools/webSearch';
 import imageSearchTool from './tools/imageSearch';
-import { time } from 'console';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:

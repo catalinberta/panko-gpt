@@ -1,7 +1,6 @@
 import ImageSearch from '@/components/_tool-cards/image-search';
 import LanguageDetetionToolCard from '@/components/_tool-cards/language-detection';
 import RemindersToolCard from '@/components/_tool-cards/reminders';
-import SummarizerSearch from '@/components/_tool-cards/search-summarizer';
 import WebSearch from '@/components/_tool-cards/web-search';
 import WebpageContentToolCard from '@/components/_tool-cards/webpage-content';
 import { Control, FieldValues, Path } from 'react-hook-form';
