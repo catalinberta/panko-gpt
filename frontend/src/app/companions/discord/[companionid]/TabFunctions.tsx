@@ -1,3 +1,4 @@
+import ImageGenerationToolCard from '@/components/_tool-cards/image-generation';
 import ImageSearch from '@/components/_tool-cards/image-search';
 import LanguageDetetionToolCard from '@/components/_tool-cards/language-detection';
 import RemindersToolCard from '@/components/_tool-cards/reminders';
@@ -16,6 +17,7 @@ const TabFunctions = <T extends FieldValues>({ control }: TabFunctionsProps<T>) 
 			<RemindersToolCard control={control} name={'functionReminders' as Path<T>} />
 			<WebSearch control={control} name={'functionWebSearch' as Path<T>} />
 			<ImageSearch control={control} name={'functionImageSearch' as Path<T>} />
+			<ImageGenerationToolCard control={control} name={'functionImageGeneration' as Path<T>} />
 			<LanguageDetetionToolCard control={control} name={'functionLanguageDetection' as Path<T>} />
 		</div>
 	);

@@ -32,6 +32,7 @@ import {
 } from './tools/reminder';
 import webSearchTool from './tools/webSearch';
 import imageSearchTool from './tools/imageSearch';
+import imageGenerationTool from './tools/imageGeneration';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -100,6 +101,7 @@ export const queryGPT = async (
 		config.functionWebSearchGoogleApiKey,
 		config.functionWebSearchGoogleCseKey
 	);
+	const initializedImageGenerationTool = imageGenerationTool(config.openAiKey);
 
 	const toolsByName: {
 		[key: string]: DynamicTool | DynamicStructuredTool<any>;
@@ -111,7 +113,8 @@ export const queryGPT = async (
 		getReminderById: initializedGetReminderByIdTool,
 		removeReminder: initializedRemoveReminderByIdTool,
 		webSearch: initializedWebSearchTool,
-		imageSearch: initializedImageSearchTool
+		imageSearch: initializedImageSearchTool,
+		imageGeneration: initializedImageGenerationTool
 	};
 
 	const messages = [];
@@ -126,9 +129,10 @@ export const queryGPT = async (
 		config.functionReminders && tools.push(initializedRemoveReminderByIdTool);
 		config.functionWebSearch && tools.push(initializedWebSearchTool);
 		config.functionImageSearch && tools.push(initializedImageSearchTool);
+		config.functionImageGeneration && tools.push(initializedImageGenerationTool);
 		messages.push(
 			new SystemMessage(
-				'Do not generate image urls yourself. You can use imageSearch tool to also look for images to enrich responses.'
+				'Do not generate image urls yourself. You can use imageSearch tool to look for images or imageGeneration tool to generate images in order to enrich responses with images.'
 			)
 		);
 	}
@@ -254,7 +258,8 @@ export const queryGPT = async (
 	}
 
 	timeToResponse = Math.round((new Date().getTime() - timeToResponse) / 1000);
-	logger.silly(`LLM response [${timeToResponse}s]:  ${responseContent}`);
+	logger.silly(`LLM response:  ${responseContent}`);
+	logger.debug(`LLM response time [${timeToResponse}s]:`);
 
 	return {
 		response: responseContent,

@@ -22,6 +22,7 @@ export interface BaseConfig {
 	functionImageSearchGoogleApiKey?: string;
 	functionImageSearchGoogleCseKey?: string;
 	functionReminders?: boolean;
+	functionImageGeneration?: boolean;
 	functionLanguageDetection?: boolean;
 	functionLanguageDetectionWhitelist?: string;
 }

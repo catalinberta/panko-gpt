@@ -24,6 +24,7 @@ export const BaseConfigSchema = new mongoose.Schema({
 	functionImageSearch: { type: Boolean, required: false, default: false },
 	functionImageSearchGoogleApiKey: { type: String, required: false },
 	functionImageSearchGoogleCseKey: { type: String, required: false },
+	functionImageGeneration: { type: Boolean, required: false, default: false },
 	functionReminders: { type: Boolean, required: false, default: true },
 	functionLanguageDetection: { type: Boolean, required: false, default: false },
 	functionLanguageDetectionWhitelist: { type: String, required: false, default: '' }
