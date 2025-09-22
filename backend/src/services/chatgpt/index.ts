@@ -129,10 +129,10 @@ export const queryGPT = async (
 		config.functionReminders && tools.push(initializedRemoveReminderByIdTool);
 		config.functionWebSearch && tools.push(initializedWebSearchTool);
 		config.functionImageSearch && tools.push(initializedImageSearchTool);
-		tools.push(initializedImageGenerationTool);
+		config.functionImageGeneration && tools.push(initializedImageGenerationTool);
 		messages.push(
 			new SystemMessage(
-				'Do not generate image urls yourself. You can use imageSearch tool to also look for images to enrich responses.'
+				'Do not generate image urls yourself. You can use imageSearch tool to look for images or imageGeneration tool to generate images in order to enrich responses with images.'
 			)
 		);
 	}

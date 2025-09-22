@@ -49,6 +49,7 @@ const formSchema = z
 		functionImageSearch: z.boolean(),
 		functionImageSearchGoogleApiKey: z.string(),
 		functionImageSearchGoogleCseKey: z.string(),
+		functionImageGeneration: z.boolean(),
 		functionLanguageDetection: z.boolean(),
 		functionLanguageDetectionWhitelist: z.string()
 	})
@@ -122,6 +123,7 @@ const defaultValues = {
 	functionImageSearch: false,
 	functionImageSearchGoogleApiKey: '',
 	functionImageSearchGoogleCseKey: '',
+	functionImageGeneration: false,
 	functionLanguageDetection: false,
 	functionLanguageDetectionWhitelist: ''
 };
