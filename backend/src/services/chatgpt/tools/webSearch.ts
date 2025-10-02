@@ -2,7 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import logger from '../../logger';
 import { GoogleCustomSearch } from '@langchain/community/tools/google_custom_search';
-import webScrapeUrls from '../../scraper';
+import scrapeAndSummarizeUrls from '../../scraper';
 import { createLLM, summarizeText } from '..';
 import { chatGptDefaults } from '../../../constants';
 import { HumanMessage } from '@langchain/core/messages';
@@ -40,7 +40,7 @@ const webSearch = async (
 
 		if (topSources.length) {
 			const links = topSources.map((r: any) => r.link).slice(0, 5);
-			const contentFromLinks = await webScrapeUrls(links, openAiKey, userquery);
+			const contentFromLinks = await scrapeAndSummarizeUrls(links, openAiKey, userquery);
 			webSearchContent += ' ' + contentFromLinks;
 		}
 

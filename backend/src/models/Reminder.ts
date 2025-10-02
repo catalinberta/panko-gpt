@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
-import { LogLevel } from '../services/logger';
 
-interface LogEntry extends Document {
-	logLevel: LogLevel;
-	[key: string]: any;
-}
-
-const ReminderSchema = new mongoose.Schema<LogEntry>({
+const ReminderSchema = new mongoose.Schema({
 	createdAt: { type: Date, required: true },
 	dueAt: { type: Date, required: true },
 	platform: { type: String, required: true },
@@ -25,7 +19,7 @@ const ReminderSchema = new mongoose.Schema<LogEntry>({
 	completed: { type: Boolean, required: false, default: false }
 });
 
-export const ReminderModel = mongoose.model<LogEntry>('Reminders', ReminderSchema);
+export const ReminderModel = mongoose.model('Reminders', ReminderSchema);
 
 export const getAllReminders = () => ReminderModel.find({ completed: false }).lean();
 export const getServerReminders = (serverId: string) => ReminderModel.find({ serverId, completed: false }).lean();

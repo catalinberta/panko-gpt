@@ -6,8 +6,7 @@
 		"dev": "next dev --turbopack",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint",
-		"dev:tailwind": "tailwindcss --config tailwind.config.js --content './app/**/*.{ts,tsx}' --watch"
+		"lint": "next lint"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^5.1.1",

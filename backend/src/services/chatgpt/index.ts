@@ -33,6 +33,7 @@ import {
 import webSearchTool from './tools/webSearch';
 import imageSearchTool from './tools/imageSearch';
 import imageGenerationTool from './tools/imageGeneration';
+import { addNewsTopicTool, getAllNewsTopicsTool, getNewsTopicByIdTool, removeNewsTopicTool } from './tools/newsTracker';
 
 const textToChunksContext = `
 	Imagine a utility that takes a large, unstructured text, and its task is to output a list of coherent chunks. Each chunk should:
@@ -92,6 +93,11 @@ export const queryGPT = async (
 	const initializedUpdateReminderTool = updateReminderTool();
 	const initializedGetReminderByIdTool = getReminderByIdTool();
 	const initializedRemoveReminderByIdTool = removeReminderTool();
+	const initializedGetAllNewsTopicsTool = getAllNewsTopicsTool();
+	const initializedAddNewsTopicTool = addNewsTopicTool(config._id);
+	const initializedUpdateNewsTopicTool = updateReminderTool();
+	const initializedGetNewsTopicByIdTool = getNewsTopicByIdTool();
+	const initializedRemoveNewsTopicByIdTool = removeNewsTopicTool();
 	const initializedWebSearchTool = webSearchTool(
 		config.openAiKey,
 		config.functionWebSearchGoogleApiKey,
@@ -114,11 +120,18 @@ export const queryGPT = async (
 		removeReminder: initializedRemoveReminderByIdTool,
 		webSearch: initializedWebSearchTool,
 		imageSearch: initializedImageSearchTool,
-		imageGeneration: initializedImageGenerationTool
+		imageGeneration: initializedImageGenerationTool,
+		getAllNewsTopics: initializedGetAllNewsTopicsTool,
+		addNewsTopic: initializedAddNewsTopicTool,
+		updateNewsTopic: initializedUpdateNewsTopicTool,
+		getNewsTopicById: initializedGetNewsTopicByIdTool,
+		removeNewsTopic: initializedRemoveNewsTopicByIdTool
 	};
 
 	const messages = [];
 	const tools = [];
+	userMessage.context && messages.push(new SystemMessage('User context: ' + userMessage.context));
+	messages.push(new HumanMessage(userMessage.message));
 
 	if (!disableTools) {
 		config.functionUrlSummarizer && tools.push(initializedSummarizeWebpageUrlTool);
@@ -130,6 +143,11 @@ export const queryGPT = async (
 		config.functionWebSearch && tools.push(initializedWebSearchTool);
 		config.functionImageSearch && tools.push(initializedImageSearchTool);
 		config.functionImageGeneration && tools.push(initializedImageGenerationTool);
+		tools.push(initializedGetAllNewsTopicsTool);
+		tools.push(initializedAddNewsTopicTool);
+		tools.push(initializedUpdateNewsTopicTool);
+		tools.push(initializedGetNewsTopicByIdTool);
+		tools.push(initializedRemoveNewsTopicByIdTool);
 		messages.push(
 			new SystemMessage(
 				'Do not generate image urls yourself. You can use imageSearch tool to look for images or imageGeneration tool to generate images in order to enrich responses with images.'
@@ -167,12 +185,17 @@ export const queryGPT = async (
 			}
 		});
 	}
-	userMessage.context && messages.push(new SystemMessage('Message context: ' + userMessage.context));
-	messages.push(new HumanMessage(userMessage.message));
 
 	if (config.functionLanguageDetection) {
+		let previousMessage = '';
 		const cleanedUserMessage = userMessage.message.replace(/<[^>]*>\s*/, '');
-		const userLanguage = getLanguageFromText(cleanedUserMessage, config.functionLanguageDetectionWhitelist);
+		if (previousMessages && previousMessages.length >= 2) {
+			previousMessage = previousMessages[previousMessages.length - 2].content;
+		}
+		const userLanguage = getLanguageFromText(
+			`${previousMessage} ${cleanedUserMessage}`,
+			config.functionLanguageDetectionWhitelist
+		);
 		if (userLanguage) {
 			logger.debug(`User language: ${userLanguage}`);
 			messages.push(
@@ -349,9 +372,10 @@ export const getComponents = async (
 			Component Rules:
 				- Interactive components (buttons, selects) must be placed inside Action Rows (type: 1).
 				- The top-level "components" array must contain Action Row objects, NOT nested arrays of arrays.
-				- Max 5 components per Action Row.
-				- Max 5 Action Rows per message.
-				- Max 1 Select/Dropdown per message.
+				- Max 1 Action Rows with Max 5 components of the same type per message.
+				- Max 1 Select/Dropdown per Action Row.
+				- Never mix components, only one type per message.
+				- Components must only present single-choice options, since users cannot multi-select or interact with more than one at a time.
 				- Do NOT use custom component types like "text", "media", "container", or "section" in the final Discord components array. These are internal concepts for structuring the response before conversion.
 
 			Embed Usage Rules:
@@ -383,16 +407,32 @@ export const getComponents = async (
 				],
 				"components": [
 					{
-					"type": 1,
-					"components": [
-						{
-						"type": 2,
-						"style": 5,
-						"label": "Example Link Button",
-						"url": "[https://discord.com](https://discord.com)"
-						}
-					]
-					},
+						"type": 1,
+						"components": [
+							{
+								"type": 2,
+								"style": 5,
+								"label": "Example Link Button",
+								"url": "[https://discord.com](https://discord.com)"
+							}
+						]
+					}
+				]
+			}
+				OR
+			{
+				"content": "This is the main text content.",
+				"embeds": [
+					{
+						"title": "Image title",
+						"description": "Image description.",
+						"image": {
+							"url": "https://example.com/image.png"
+						},
+						"color": 5814783
+					}
+				],
+				"components": [
 					{
 						"type": 1,
 						"components": [

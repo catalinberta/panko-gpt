@@ -16,6 +16,7 @@
 	"license": "ISC",
 	"devDependencies": {
 		"@tsconfig/node16": "^1.0.3",
+		"@types/async": "^3.2.25",
 		"@types/body-parser": "^1.19.5",
 		"@types/compression": "^1.7.5",
 		"@types/cookie-parser": "^1.4.7",
@@ -40,6 +41,7 @@
 		"@langchain/openai": "^0.6.12",
 		"@langchain/textsplitters": "^0.0.3",
 		"@types/jsdom": "^21.1.6",
+		"async": "^3.2.6",
 		"axios": "^1.7.9",
 		"body-parser": "^1.20.2",
 		"compression": "^1.7.4",
@@ -49,11 +51,11 @@
 		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
 		"gpt-3-encoder": "^1.1.4",
-		"http": "^0.0.1-security",
 		"jsdom": "^24.0.0",
 		"langchain": "^0.3.34",
 		"mongodb-atlas-api-client": "^3.19.0",
 		"mongoose": "^8.3.0",
+		"newsapi": "^2.4.1",
 		"node-cron": "^4.2.1",
 		"openai": "^5.22.0",
 		"p-limit": "^7.1.1",
@@ -73,6 +75,9 @@
 	"overrides": {
 		"@browserbasehq/stagehand": {
 			"openai": "^5.22.0"
+		},
+		"gnews-scrape": {
+			"puppeteer": "^22.14.0"
 		}
 	}
 }

@@ -12,15 +12,18 @@ const finalSummaryMaxTokens = 2000;
 const reSummaryMaxTokens = 1000;
 const maxSummarizedTokens = 5000;
 
-export const webScrapeUrls = async (urls: string[], apiKey: string, userquery: string): Promise<string> => {
+export const scrapeAndSummarizeUrls = async (urls: string[], apiKey: string, userquery: string): Promise<string> => {
 	if (!urls || !urls.length) return 'No urls supplied';
 
-	const urlsContent = await Promise.all(urls.map(getWebPageContentFromUrl));
+	const urlsContent = await Promise.all(urls.map(scrapeUrl));
 	await closeBrowser();
 	const summarizedUrlsContent = await summarizeAllUrlsContent(urlsContent, apiKey, userquery);
-	const finalSummary = await createFinalSummary(summarizedUrlsContent, apiKey, userquery);
 
-	return finalSummary;
+	if (urls.length > 1) {
+		return await createFinalSummary(summarizedUrlsContent, apiKey, userquery);
+	}
+
+	return summarizedUrlsContent[0];
 };
 
 const summarizeAllUrlsContent = async (urlsContent: string[], apiKey: string, userquery: string): Promise<string[]> => {
@@ -120,7 +123,7 @@ const initBrowser = async (): Promise<void> => {
 		browserIsInitializing = false;
 	}
 };
-const getWebPageContentFromUrl = async (url: string) => {
+export const scrapeUrl = async (url: string) => {
 	await initBrowser();
 
 	const page = await browser!.newPage();
@@ -155,6 +158,7 @@ const getWebPageContentFromUrl = async (url: string) => {
 		throw new Error(`Error opening ${url}, might be protected`);
 	}
 };
+
 const closeBrowser = async () => {
 	if (browser) {
 		await browser.close();
@@ -163,4 +167,4 @@ const closeBrowser = async () => {
 	}
 };
 
-export default webScrapeUrls;
+export default scrapeAndSummarizeUrls;

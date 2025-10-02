@@ -12,6 +12,7 @@ import { hideCredentialsFromMongoDbUrl } from './utils';
 import logger, { setLogLevel } from './services/logger';
 import { getSettings } from './models/Settings';
 import { startRemindersScheduler } from './services/reminders';
+import { startNewsTrackerScheduler } from './services/news-tracker';
 
 const app = express();
 
@@ -48,6 +49,7 @@ const onInitStart = async () => {
 
 const onInitComplete = () => {
 	startRemindersScheduler();
+	startNewsTrackerScheduler();
 };
 
 (async () => {
